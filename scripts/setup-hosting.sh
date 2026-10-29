@@ -181,7 +181,7 @@ finish() {
 
 # ──────────────────────────────────────────────────────────────────────────
 # STAGES — DocuLens free hosting: GitHub, Groq, Supabase, Google sign-in,
-# Hugging Face (API), Vercel (website). Values land in .env.deploy (git-ignored).
+# Render (API), Vercel (website). Values land in .env.deploy (git-ignored).
 # ──────────────────────────────────────────────────────────────────────────
 
 TOTAL_STAGES=10
@@ -228,20 +228,14 @@ note "Also updated your local .env so the laptop version uses the new key."
 pause
 
 # ── 3 ─────────────────────────────────────────────────────────────────────
-stage "Choose the public addresses"
+stage "Choose the public address and the admin"
 say "Vercel gives the website a free address: https://<project-name>.vercel.app"
-ask VERCEL_PROJECT "Vercel project name (lowercase, e.g. doculens):"
+ask VERCEL_PROJECT "Vercel project name (lowercase letters, digits and dashes, e.g. doculens):"
+VERCEL_PROJECT=$(printf '%s' "$VERCEL_PROJECT" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9-\n' '-')
 SITE_URL="https://${VERCEL_PROJECT}.vercel.app"
 write_env VERCEL_PROJECT "$VERCEL_PROJECT"
 write_env SITE_URL "$SITE_URL"
-say "Hugging Face hosts the API at https://<username>-doculens-api.hf.space"
-open_url "https://huggingface.co/join"
-step "Sign up or log in, then copy your username from the top-right menu."
-ask HF_USERNAME "Your Hugging Face username:"
-HF_SPACE="${HF_USERNAME}/doculens-api"
-API_URL="https://$(printf '%s' "$HF_USERNAME" | tr '[:upper:]_.' '[:lower:]--')-doculens-api.hf.space"
-write_env HF_SPACE "$HF_SPACE"
-write_env API_URL "$API_URL"
+note "Website address: $SITE_URL (the API's address comes from Render in stage 7)."
 ask ADMIN_EMAILS "Google account(s) that get the admin dashboard [agrawalarsh15@gmail.com]:"
 ADMIN_EMAILS="${ADMIN_EMAILS:-agrawalarsh15@gmail.com}"
 write_env ADMIN_EMAILS "$ADMIN_EMAILS"
@@ -257,6 +251,9 @@ pause "Press Enter when the project dashboard has loaded"
 step "Open Project Settings -> Data API (or the project's Connect dialog) and copy the Project URL."
 ask SUPABASE_URL "Project URL (https://<ref>.supabase.co):"
 SUPABASE_URL="${SUPABASE_URL%/}"
+SUPABASE_URL="${SUPABASE_URL%/rest/v1}"
+SUPABASE_URL="${SUPABASE_URL%/auth/v1}"
+note "Using $SUPABASE_URL"
 write_env SUPABASE_URL "$SUPABASE_URL"
 step "Open Project Settings -> API Keys. Copy the Publishable key (sb_publishable_...)."
 ask SUPABASE_PUBLISHABLE_KEY "Publishable key:"
@@ -268,14 +265,17 @@ pause
 
 # ── 5 ─────────────────────────────────────────────────────────────────────
 stage "Supabase: database connection and private file storage"
-step "Click 'Connect' at the top of the dashboard -> Connection String -> choose 'Session pooler'."
-step "Copy the URI (postgresql://postgres.<ref>:[YOUR-PASSWORD]@aws-...pooler.supabase.com:5432/postgres)."
-ask_secret DB_URI "Paste the URI (hidden):"
-ask_secret DB_PASSWORD "Database password you chose in stage 4 (hidden):"
-DB_PASSWORD_ENC=$("$PY" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$DB_PASSWORD")
-DATABASE_URL="${DB_URI/\[YOUR-PASSWORD\]/$DB_PASSWORD_ENC}"
-DATABASE_URL="${DATABASE_URL/postgresql:\/\//postgresql+psycopg://}"
-DATABASE_URL="${DATABASE_URL/postgres:\/\//postgresql+psycopg://}"
+DATABASE_URL=$(_existing DATABASE_URL || true)
+if [[ -z "$DATABASE_URL" ]] || ! confirm "Keep the database connection saved in an earlier run?"; then
+  step "Click 'Connect' at the top of the dashboard -> Connection String -> choose 'Session pooler'."
+  step "Copy the URI (postgresql://postgres.<ref>:[YOUR-PASSWORD]@aws-...pooler.supabase.com:5432/postgres)."
+  ask_secret DB_URI "Paste the URI (hidden):"
+  ask_secret DB_PASSWORD "Database password you chose in stage 4 (hidden):"
+  DB_PASSWORD_ENC=$("$PY" -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$DB_PASSWORD")
+  DATABASE_URL="${DB_URI/\[YOUR-PASSWORD\]/$DB_PASSWORD_ENC}"
+  DATABASE_URL="${DATABASE_URL/postgresql:\/\//postgresql+psycopg://}"
+  DATABASE_URL="${DATABASE_URL/postgres:\/\//postgresql+psycopg://}"
+fi
 write_env DATABASE_URL "$DATABASE_URL"
 say "Creating the private 'documents' bucket for original uploads..."
 if [[ "$SUPABASE_SERVICE_ROLE_KEY" == sb_* ]]; then AUTH_HDR=(); else AUTH_HDR=(-H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"); fi
@@ -320,32 +320,39 @@ note "    Redirect URLs:  $SITE_URL/auth/callback   and   http://localhost:5173/
 pause "Press Enter when Google is enabled and the URLs are saved"
 
 # ── 7 ─────────────────────────────────────────────────────────────────────
-stage "Hugging Face: token and API Space"
-open_url "https://huggingface.co/settings/tokens/new?tokenType=write"
-step "Create a token named 'doculens-deploy' with the Write role, and copy it (starts hf_)."
-ask_secret HF_TOKEN "Paste the token (hidden):"
-write_env HF_TOKEN "$HF_TOKEN"
+stage "Render: create the API service"
+say "Render runs the API for free (512 MB RAM; it sleeps after 15 minutes idle and wakes in about a minute)."
+open_url "https://render.com/deploy?repo=https://github.com/$GITHUB_REPO"
+step "Sign in with GitHub and allow Render to read the $GITHUB_REPO repository if asked."
+step "Render reads render.yaml: name the Blueprint 'doculens', keep the free 'doculens-api' web service, click 'Deploy Blueprint'."
+note "The first start fails until the secrets are set in a moment; that is expected."
+pause "Press Enter once the doculens-api service appears in your Render dashboard"
+open_url "https://dashboard.render.com/u/settings#api-keys"
+step "Account Settings -> API Keys -> Create API Key, name it 'doculens-setup', copy it (starts rnd_)."
+ask_secret RENDER_API_KEY "Paste the Render API key (hidden):"
+write_env RENDER_API_KEY "$RENDER_API_KEY"
 ENCRYPTION_KEY=$(_existing ENCRYPTION_KEY || true)
 if [[ -z "$ENCRYPTION_KEY" ]]; then
   ENCRYPTION_KEY=$("$PY" -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
   note "Generated a new encryption key for users' saved Groq keys."
 fi
 write_env ENCRYPTION_KEY "$ENCRYPTION_KEY"
-write_env APP_ENV "production"
-write_env AUTH_MODE "supabase"
 write_env CORS_ORIGINS "$SITE_URL"
-confirm "Create/update the Space $HF_SPACE, set its secrets and upload the API?" && \
-  HF_TOKEN="$HF_TOKEN" HF_SPACE="$HF_SPACE" SPACE_SECRETS_FILE="$ENV_FILE" "$PY" scripts/hf_space_deploy.py
-note "The first build takes about 5-10 minutes (it downloads the embedding model into the image)."
+if confirm "Set the API's secrets on Render and deploy it?"; then
+  OUT=$(RENDER_API_KEY="$RENDER_API_KEY" ENV_FILE="$ENV_FILE" "$PY" scripts/render_deploy.py)
+  printf '%s\n' "$OUT" | grep -v '^API_URL=' | sed 's/^/  /'
+  API_URL=$(printf '%s\n' "$OUT" | sed -n 's/^API_URL=//p')
+  write_env API_URL "$API_URL"
+fi
+note "Building takes about 5 minutes. Watch it in the Render dashboard under doculens-api -> Events."
 pause
 
 # ── 8 ─────────────────────────────────────────────────────────────────────
-stage "GitHub Actions: automatic deploys and keep-alive"
-set_secret HF_TOKEN "$HF_TOKEN"
-set_var HF_SPACE "$HF_SPACE"
+stage "GitHub Actions: keep-alive"
+API_URL=$(_existing API_URL || true)
 set_var API_URL "$API_URL"
-say "From now on, every push to main runs the tests and then updates the Space."
-say "A daily job pings $API_URL so the free Space and database don't go to sleep."
+say "Render redeploys the API by itself after every push to main once the tests pass."
+say "A GitHub Actions job pings $API_URL every 10 minutes so the API and the database stay awake."
 pause
 
 # ── 9 ─────────────────────────────────────────────────────────────────────
@@ -366,7 +373,7 @@ if [[ "$DEPLOYED_URL" != "$SITE_URL" ]]; then
   SITE_URL="$DEPLOYED_URL"
   write_env SITE_URL "$SITE_URL"
   write_env CORS_ORIGINS "$SITE_URL"
-  HF_TOKEN="$HF_TOKEN" HF_SPACE="$HF_SPACE" "$PY" scripts/update_space_variable.py CORS_ORIGINS "$SITE_URL"
+  RENDER_API_KEY="$RENDER_API_KEY" "$PY" scripts/render_deploy.py "CORS_ORIGINS=$SITE_URL" | grep -v '^API_URL=' | sed 's/^/  /'
   warn "Also replace the old address in Google (JavaScript origin) and Supabase (Site URL and Redirect URL) with $SITE_URL."
   pause
 fi
@@ -375,11 +382,11 @@ fi
 stage "Check that everything is live"
 say "Waiting for the API to answer (the first build can take a few minutes)..."
 for i in $(seq 1 40); do
-  if curl -fsS --max-time 20 "$API_URL/api/health?deep=1" >/dev/null 2>&1; then
+  if curl -fsS --max-time 60 "$API_URL/api/health?deep=1" >/dev/null 2>&1; then
     printf '  %s✓%s API and database are up: %s\n' "$GREEN" "$RESET" "$API_URL"
     break
   fi
-  [[ $i == 40 ]] && warn "The API is not answering yet. Check the build logs: https://huggingface.co/spaces/$HF_SPACE"
+  [[ $i == 40 ]] && warn "The API is not answering yet. Check the logs in the Render dashboard (doculens-api -> Logs)."
   sleep 15
 done
 open_url "$SITE_URL"

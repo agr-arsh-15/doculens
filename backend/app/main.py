@@ -11,7 +11,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from app.api import admin, analyses, documents, me, meta
-from app.config import AUTH_MODE, CORS_ORIGINS, DISCLAIMER, IS_PRODUCTION
+from app.config import AUTH_MODE, CORS_ORIGINS, DISCLAIMER, IS_PRODUCTION, LAB_USE_WORDNET
 from app.security import SecurityHeadersMiddleware, limiter
 from app.nlp.embeddings import embedder
 from app.playbooks.loader import load_playbooks
@@ -45,7 +45,7 @@ def _ensure_nltk_data() -> None:
         return
     log = logging.getLogger(__name__)
     for pkg, resource in _NLTK_PACKAGES.items():
-        if _nltk_has(nltk, resource):
+        if _nltk_has(nltk, resource) or (pkg == "wordnet" and not LAB_USE_WORDNET):
             continue
         try:
             with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):

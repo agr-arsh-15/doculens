@@ -35,7 +35,7 @@ function Privacy() {
       <H>Where data is stored</H>
       <p className="mt-3">
         Account data, documents and reports are stored with Supabase (database and private file storage). The website is served by
-        Vercel and the analysis server runs on Hugging Face Spaces. AI requests go to Groq. These providers process data on our behalf.
+        Vercel and the analysis server runs on Render. AI requests go to Groq. These providers process data on our behalf.
       </p>
 
       <H>Cookies and local storage</H>

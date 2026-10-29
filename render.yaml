@@ -1,0 +1,29 @@
+# Render Blueprint for the DocuLens API (free web service: 0.1 CPU, 512 MB RAM, sleeps after 15 min idle).
+# Secrets are not stored here: the setup wizard (scripts/setup-hosting.sh) sets them through the Render API.
+services:
+  - type: web
+    name: doculens-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    buildFilter:
+      paths:
+        - backend/**
+    healthCheckPath: /api/health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: AUTH_MODE
+        value: supabase
+      - key: SUPABASE_STORAGE_BUCKET
+        value: documents
+      # Fit in 512 MB: TF-IDF clause matching instead of the neural model, rule-based lemmas in the NLP Lab,
+      # and one analysis at a time.
+      - key: DISABLE_NEURAL_EMBEDDINGS
+        value: "1"
+      - key: LAB_USE_WORDNET
+        value: "0"
+      - key: ANALYSIS_WORKERS
+        value: "1"

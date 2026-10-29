@@ -33,6 +33,10 @@ LLM_CONCURRENCY = max(1, int(os.getenv("LLM_CONCURRENCY", "2")))
 
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
 DISABLE_NEURAL_EMBEDDINGS = os.getenv("DISABLE_NEURAL_EMBEDDINGS", "").lower() in {"1", "true", "yes"}
+# Small hosts (e.g. 512 MB): WordNet adds ~160 MB of RAM, so the NLP Lab can use rule-based lemmas instead,
+# and analyses can be limited to one at a time.
+LAB_USE_WORDNET = os.getenv("LAB_USE_WORDNET", "1").lower() not in {"0", "false", "no"}
+ANALYSIS_WORKERS = max(1, int(os.getenv("ANALYSIS_WORKERS", "2")))
 
 MAX_UPLOAD_MB = float(os.getenv("MAX_UPLOAD_MB", "15"))
 MAX_PAGES = int(os.getenv("MAX_PAGES", "120"))

@@ -50,6 +50,7 @@ class LabLayer1(BaseModel):
     pos_distribution: Dict[str, int]
     sample_lemmas: List[LemmaSample]
     sentence_tokenizer: str
+    lemmatizer: str = "WordNet"
 
 
 class LabLayer2(BaseModel):

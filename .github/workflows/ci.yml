@@ -72,33 +72,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build the API image
-        run: docker build -t doculens-api backend
-      - name: Start it and check health
+      - name: Build the API image with the Render settings (TF-IDF, rule-based lemmas)
+        run: docker build --build-arg DISABLE_NEURAL_EMBEDDINGS=1 --build-arg LAB_USE_WORDNET=0 -t doculens-api backend
+      - name: Run it inside Render's 512 MB limit and analyse a large real PDF
         run: |
-          docker run -d --name api -p 7860:7860 -e DISABLE_NEURAL_EMBEDDINGS=0 doculens-api
-          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:7860/api/health && exit 0; sleep 2; done
-          docker logs api; exit 1
-
-  deploy-backend:
-    needs: [e2e, docker]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.HF_SPACE != ''
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Sync backend/ to the Hugging Face Space
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_SPACE: ${{ vars.HF_SPACE }}
-        run: |
-          git clone --depth 1 "https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" space
-          rsync -a --delete --exclude '.git' --exclude 'data/' --exclude 'tests/' --exclude 'eval/' \
-            --exclude '__pycache__/' --exclude '.pytest_cache/' backend/ space/
-          cp deploy/hf-space/README.md space/README.md
-          cd space
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-          git add -A
-          git diff --cached --quiet && echo "Space already up to date" && exit 0
-          git commit -m "Deploy ${GITHUB_SHA::7} from GitHub"
-          git push
+          docker run -d --name api --memory=512m --memory-swap=512m -p 10000:10000 \
+            -e ANALYSIS_WORKERS=1 -e LLM_PROVIDER=none doculens-api
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:10000/api/health >/dev/null && break; sleep 2; done
+          doc=$(curl -fsS -F "file=@demo_documents/saas_contracts/gravity_bridgenet_saas_agreement.pdf;type=application/pdf" \
+            http://127.0.0.1:10000/api/documents | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+          aid=$(curl -fsS -H 'Content-Type: application/json' -d "{\"document_id\": \"$doc\", \"use_llm\": false}" \
+            http://127.0.0.1:10000/api/analyses | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+          for i in $(seq 1 90); do
+            status=$(curl -fsS http://127.0.0.1:10000/api/analyses/$aid/status | python3 -c "import sys,json; print(json.load(sys.stdin)['status'])")
+            [ "$status" = completed ] && break
+            [ "$status" = failed ] && { docker logs api; exit 1; }
+            sleep 2
+          done
+          curl -fsS -o /dev/null http://127.0.0.1:10000/api/analyses/$aid/report.pdf
+          curl -fsS -o /dev/null http://127.0.0.1:10000/api/analyses/$aid/lab
+          docker stats --no-stream --format 'Memory after analysis, PDF and Lab: {{.MemUsage}}' api
+          [ "$(docker inspect -f '{{.State.OOMKilled}}' api)" = false ] || { echo "Out of memory"; exit 1; }

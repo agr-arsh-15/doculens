@@ -2,6 +2,7 @@ import re
 from functools import lru_cache
 from typing import Dict, List, Tuple
 
+from app.config import LAB_USE_WORDNET
 from app.lab.schemas import LemmaSample
 
 
@@ -10,6 +11,8 @@ def _nltk_tools():
     """Return (lemmatizer, pos_tag) when the WordNet and perceptron-tagger data are usable."""
     lemmatizer = tagger = None
     try:
+        if not LAB_USE_WORDNET:
+            raise LookupError("WordNet disabled by configuration")
         from nltk.stem import WordNetLemmatizer
         candidate = WordNetLemmatizer()
         candidate.lemmatize("contracts")
@@ -56,6 +59,10 @@ def _fallback_lemmatize(word: str) -> str:
     if w.endswith('tion') or w.endswith('tions'):
         return re.sub(r'tions?$', 'tion', w)
     return w
+
+
+def lemmatizer_name() -> str:
+    return "WordNet" if _nltk_tools()[0] else "rule-based suffixes"
 
 
 def tag_pos_and_lemmatize(tokens: List[str]) -> Tuple[Dict[str, int], List[LemmaSample]]:

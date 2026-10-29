@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 from app.analysis.engine import run_analysis
+from app.config import ANALYSIS_WORKERS
 from app.classify.parties import extract_parties
 from app.llm.provider import LLMProvider
 from app.models.schemas import Clause, Detection
@@ -16,7 +17,7 @@ from app.storage import db
 
 log = logging.getLogger(__name__)
 
-_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="analysis")
+_executor = ThreadPoolExecutor(max_workers=ANALYSIS_WORKERS, thread_name_prefix="analysis")
 
 # Stages that already ran at upload time; replayed so the tracker shows the whole pipeline.
 _UPLOAD_STAGES = [("parsing", "Parsing document", 2), ("segmenting", "Segmenting clauses", 4), ("classifying", "Classifying document", 6)]

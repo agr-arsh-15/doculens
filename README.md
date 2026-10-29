@@ -168,10 +168,10 @@ Locally nothing changes: with `AUTH_MODE` unset the API runs in `local` mode (on
 | Part | Service | Free tier notes |
 | --- | --- | --- |
 | Website | Vercel (`vercel.json`) | 100 GB bandwidth per month |
-| API | Hugging Face Spaces, Docker (`backend/Dockerfile`, port 7860) | 2 vCPU, 16 GB RAM; sleeps after 48 hours without traffic and takes 1-2 minutes to wake |
+| API | Render free web service, Docker (`render.yaml`, `backend/Dockerfile`) | 0.1 CPU, 512 MB RAM; sleeps after 15 minutes without traffic and takes about a minute to wake; 750 free hours a month (enough for one always-on service); 5 GB bandwidth a month |
 | Sign-in, database, files | Supabase (Auth, Postgres, Storage) | 500 MB database, 1 GB file storage, 50,000 monthly users; paused after 7 days of inactivity |
 | AI | Groq | About 8,000 tokens per minute per model; roughly 10-15 full analyses per day on one key, which is why there is a per-user daily limit |
-| CI/CD | GitHub Actions | Tests on every push; on `main`, syncs `backend/` to the Space; a daily job calls `/api/health?deep=1` so the Space and database stay awake |
+| CI/CD | GitHub Actions | Tests on every push, including the API image running a large PDF inside a 512 MB limit; Render redeploys after the checks pass on `main`; a job calls `/api/health?deep=1` every 10 minutes so the API and database stay awake |
 
 **One-time setup.** Run the guided wizard from the repository root:
 
@@ -185,16 +185,18 @@ It walks you through each dashboard, captures the values you copy into the git-i
 2. Rotates the Groq key.
 3. Creates the private storage bucket and the database tables in Supabase.
 4. Lists exactly what to enter for Google sign-in.
-5. Creates the Hugging Face Space with its secrets and uploads the API.
-6. Sets the GitHub Actions secret and variables.
+5. Opens the Render Blueprint for the API, then sets its secrets through the Render API and deploys it.
+6. Sets the GitHub Actions variable for the keep-alive job.
 7. Prints the three variables to add in Vercel.
 8. Waits until the API answers.
 
-**API environment (Space secrets and variables):** `APP_ENV=production`, `AUTH_MODE=supabase`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (secret key), `SUPABASE_STORAGE_BUCKET=documents`, `DATABASE_URL` (Supabase session pooler URI, `postgresql+psycopg://...`), `GROQ_API_KEY`, `ENCRYPTION_KEY`, `ADMIN_EMAILS`, `CORS_ORIGINS` (the website address). Database migrations (Alembic) run automatically at startup.
+**API environment (Render):** `APP_ENV=production`, `AUTH_MODE=supabase`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (secret key), `SUPABASE_STORAGE_BUCKET=documents`, `DATABASE_URL` (Supabase session pooler URI, `postgresql+psycopg://...`), `GROQ_API_KEY`, `ENCRYPTION_KEY`, `ADMIN_EMAILS`, `CORS_ORIGINS` (the website address). Database migrations (Alembic) run automatically at startup.
 
-**Website environment (Vercel):** `VITE_API_URL` (the Space address), `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`. These are public by design.
+**Website environment (Vercel):** `VITE_API_URL` (the Render address, `https://<service>.onrender.com`), `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`. These are public by design.
 
-**GitHub Actions:** secret `HF_TOKEN`; variables `HF_SPACE` (`user/doculens-api`) and `API_URL`.
+**GitHub Actions:** variable `API_URL` (used by the keep-alive job).
+
+**Hosted mode uses less memory.** To fit Render's free 512 MB, the hosted API sets `DISABLE_NEURAL_EMBEDDINGS=1` (TF-IDF clause matching instead of the `bge-small` model; macro F1 on CUAD 57% instead of 68%), `LAB_USE_WORDNET=0` (rule-based lemmas in the NLP Lab) and `ANALYSIS_WORKERS=1`. Peak memory measured on the largest demo documents is about 350 MB. Running locally keeps the full neural model and WordNet.
 
 ## Project layout
 

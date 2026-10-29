@@ -5,7 +5,7 @@ from typing import List
 
 from app.analysis.values import find_durations, find_money, find_percents
 from app.lab.cleaner import clean_and_filter_tokens
-from app.lab.lemmatizer import tag_pos_and_lemmatize
+from app.lab.lemmatizer import lemmatizer_name, tag_pos_and_lemmatize
 from app.lab.ngrams import get_all_ngrams
 from app.lab.readability import compute_readability_metrics
 from app.lab.schemas import (
@@ -31,6 +31,7 @@ def _layer1(text: str):
         execution_time_ms=0, total_characters=len(text), raw_word_count=len(tokens), sentence_count=len(sentences),
         sample_sentences=sentences[:5], stop_words_removed_count=removed, token_reduction_percent=reduction,
         vocabulary_size=vocab, pos_distribution=pos, sample_lemmas=lemmas, sentence_tokenizer=sentence_tokenizer_name(),
+        lemmatizer=lemmatizer_name(),
     )
     layer.execution_time_ms = round((time.perf_counter() - t) * 1000, 1)
     return layer, sentences, tokens, cleaned

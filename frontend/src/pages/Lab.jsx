@@ -101,7 +101,7 @@ function Layer1({ l }) {
             ))}
           </ol>
         </Panel>
-        <Panel title="Lemmatization samples">
+        <Panel title={`Lemmatization samples · ${l.lemmatizer || 'WordNet'}`}>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
             {l.sample_lemmas.map((s) => (
               <div key={s.word} className="flex items-center gap-2 font-mono text-[12.5px]">
