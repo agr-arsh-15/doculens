@@ -27,7 +27,16 @@ export default function Report() {
   const [tab, setTab] = useState('risks')
   const [view, setView] = useState('clauses')
   const [chatOpen, setChatOpen] = useState(false)
+  const [pdfBusy, setPdfBusy] = useState(false)
+  const [pdfError, setPdfError] = useState(null)
   const viewer = useRef(null)
+  const canPdf = doc.data?.has_original_file && doc.data?.source_type === 'pdf'
+  const original = useQuery({
+    queryKey: ['document-file', docId],
+    queryFn: () => api.documentFile(docId),
+    enabled: !!docId && canPdf && view === 'pdf',
+    staleTime: Infinity,
+  })
   const findings = result.data?.findings
 
   const select = useCallback(
@@ -57,19 +66,31 @@ export default function Report() {
 
   const r = result.data
   const d = doc.data
-  const canPdf = d?.has_original_file && d?.source_type === 'pdf'
+  const downloadPdf = async () => {
+    setPdfBusy(true)
+    setPdfError(null)
+    try {
+      await api.downloadReport(r.analysis_id, `DocuLens-${r.filename.replace(/\.[^.]+$/, '')}.pdf`)
+    } catch (e) {
+      setPdfError(e.message)
+    } finally {
+      setPdfBusy(false)
+    }
+  }
 
   return (
     <div className="mx-auto max-w-[1500px] px-5 py-6">
       <div className="no-print mb-4 flex flex-wrap items-center gap-2">
         <Button variant="primary" size="sm" icon={MessageSquareText} onClick={() => setChatOpen(true)} data-testid="open-chat">Ask the document</Button>
-        <Button as="a" href={api.reportUrl(r.analysis_id)} download size="sm" icon={Download}>PDF report</Button>
+        <Button size="sm" icon={Download} loading={pdfBusy} onClick={downloadPdf} data-testid="download-pdf">PDF report</Button>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Button as={Link} to={`/lab/${r.analysis_id}`} size="sm" variant="ghost" icon={FlaskConical}>NLP Lab</Button>
           <Button as={Link} to={`/compare?a=${r.analysis_id}`} size="sm" variant="ghost" icon={GitCompareArrows}>Compare</Button>
           <Button as={Link} to={`/analyze/${r.document_id}`} size="sm" variant="ghost" icon={RefreshCw}>Change perspective</Button>
         </div>
       </div>
+
+      {pdfError && <Callout tone="error" className="mb-4" title="Could not create the PDF">{pdfError}</Callout>}
 
       <Scorecard result={r} onSelectFinding={(fid) => select(fid, 'score')} />
 
@@ -99,9 +120,15 @@ export default function Report() {
             {!d ? (
               doc.isError ? <Callout tone="error">{doc.error.message}</Callout> : <div className="grid h-full place-items-center"><Spinner /></div>
             ) : view === 'pdf' && canPdf ? (
-              <Suspense fallback={<div className="grid h-full place-items-center"><Spinner /></div>}>
-                <PdfViewer url={api.documentFileUrl(d.id)} findings={r.findings} />
-              </Suspense>
+              original.data ? (
+                <Suspense fallback={<div className="grid h-full place-items-center"><Spinner /></div>}>
+                  <PdfViewer file={original.data} findings={r.findings} />
+                </Suspense>
+              ) : original.isError ? (
+                <Callout tone="error">{original.error.message}</Callout>
+              ) : (
+                <div className="grid h-full place-items-center"><Spinner /></div>
+              )
             ) : (
               <DocumentViewer ref={viewer} text={d.text} clauses={r.clauses} findings={r.findings} activeId={activeId} onSelect={select} />
             )}

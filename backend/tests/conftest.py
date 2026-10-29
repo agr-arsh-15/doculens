@@ -8,6 +8,9 @@ import tempfile
 
 os.environ["DOCULENS_DATA_DIR"] = tempfile.mkdtemp(prefix="doculens-test-")
 os.environ["LLM_PROVIDER"] = "none"
+os.environ["AUTH_MODE"] = "test"
+os.environ["ADMIN_EMAILS"] = "admin@example.com"
+os.environ["STORAGE_BACKEND"] = "local"
 for key in ("GROQ_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY"):
     os.environ[key] = ""
 if os.environ.get("DOCULENS_TEST_NEURAL") != "1":

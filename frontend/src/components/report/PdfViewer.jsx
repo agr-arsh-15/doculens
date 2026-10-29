@@ -8,7 +8,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.m
 
 const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 
-export default function PdfViewer({ url, findings }) {
+export default function PdfViewer({ file, findings }) {
   const [pages, setPages] = useState(0)
   const [width, setWidth] = useState(720)
 
@@ -41,7 +41,7 @@ export default function PdfViewer({ url, findings }) {
   return (
     <div ref={measureRef} className="scrollbar-thin h-full overflow-y-auto rounded-2xl border border-line bg-sunken/60 p-4">
       <Document
-        file={url}
+        file={file}
         onLoadSuccess={({ numPages }) => setPages(numPages)}
         loading={<div className="grid h-64 place-items-center"><Spinner /></div>}
         error={<Callout tone="error">Could not render the original PDF. The clause view still shows every finding.</Callout>}

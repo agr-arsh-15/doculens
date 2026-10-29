@@ -1,12 +1,14 @@
 import { useMutation } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
-  BadgeAlert, ClipboardPaste, EyeOff, FileSearch, FileUp, Gauge, Layers, ListX, ScanLine, ShieldCheck,
+  BadgeAlert, BookOpenCheck, ClipboardPaste, EyeOff, FileSearch, FileUp, Gauge, Layers, ListX, LockKeyhole, LogIn,
+  ScanLine, ShieldCheck,
 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Callout, Card, Chip, cx, Spinner } from '../components/ui'
 import { api } from '../lib/api'
+import { useAuth } from '../lib/auth'
 
 const ACCEPT = '.pdf,.docx,.txt,.md'
 
@@ -103,6 +105,24 @@ function PasteBox({ onSubmit, busy }) {
   )
 }
 
+function SignInPanel() {
+  const navigate = useNavigate()
+  return (
+    <div className="flex min-h-[260px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-line-strong bg-surface px-8 py-10 text-center" data-testid="sign-in-panel">
+      <div className="mb-5 grid size-16 place-items-center rounded-2xl bg-ink text-paper shadow-card">
+        <LockKeyhole className="size-7" />
+      </div>
+      <div className="font-serif text-2xl font-semibold">Sign in to X-ray your first document</div>
+      <p className="mt-2 max-w-sm text-sm text-muted">
+        Free while in testing. Your documents and reports stay private to your account, and you can delete them at any time.
+      </p>
+      <Button variant="primary" size="lg" icon={LogIn} className="mt-6" onClick={() => navigate('/login?next=/')} data-testid="landing-sign-in">
+        Sign in with Google
+      </Button>
+    </div>
+  )
+}
+
 const CATCHES = [
   {
     icon: BadgeAlert, tone: 'critical', title: 'Risky clauses',
@@ -121,8 +141,13 @@ const CATCHES = [
   },
   {
     icon: Gauge, tone: 'ok', title: 'Off-market terms',
-    body: 'Notice periods, non-competes, liability caps and SLAs measured against market ranges.',
+    body: 'Notice periods, non-competes, liability caps and payment terms measured against sourced market ranges.',
     sample: <>Non-compete <b>24 months</b> vs market <b>0 to 12 months</b>.</>,
+  },
+  {
+    icon: BookOpenCheck, tone: 'info', title: 'Linked sources',
+    body: 'Every market standard links to the statute, regulator, court or professional guidance it comes from.',
+    sample: <>Source: <span className="underline decoration-line-strong underline-offset-2">Indian Contract Act, 1872, s.27</span></>,
   },
 ]
 
@@ -135,6 +160,7 @@ const STEPS = [
 
 export default function Landing() {
   const navigate = useNavigate()
+  const auth = useAuth()
   const [mode, setMode] = useState('file')
   const goAnalyze = (doc) => navigate(`/analyze/${doc.id}`)
 
@@ -169,6 +195,10 @@ export default function Landing() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+          {!auth.signedIn && !auth.loading ? (
+            <SignInPanel />
+          ) : (
+          <>
           <div className="mb-3 flex items-center gap-1 rounded-xl bg-sunken/70 p-1 text-sm">
             {[
               ['file', 'Upload file', FileUp],
@@ -197,8 +227,10 @@ export default function Landing() {
               {error.message}
             </Callout>
           )}
+          </>
+          )}
           <p className="mt-3 text-xs text-muted">
-            Documents are processed by your own DocuLens server. With an LLM key configured, personal identifiers are redacted before any AI call.
+            Your documents are private to your account. Personal identifiers are redacted before any AI call, and you can delete your data at any time.
           </p>
         </motion.div>
       </section>
@@ -206,7 +238,7 @@ export default function Landing() {
       <section className="border-y border-line bg-surface/60">
         <div className="mx-auto max-w-[1200px] px-5 py-14">
           <h2 className="font-serif text-2xl font-semibold">What DocuLens catches</h2>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             {CATCHES.map(({ icon: Icon, title, body, sample: s, tone }) => (
               <Card key={title} className="p-5">
                 <div className={cx('mb-3 grid size-9 place-items-center rounded-xl', `bg-${tone}-soft text-${tone}`)}>

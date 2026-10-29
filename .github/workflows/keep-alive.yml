@@ -1,0 +1,26 @@
+name: Keep alive
+
+# Free tiers pause when idle: Hugging Face Spaces after ~48 hours, Supabase projects after 7 days.
+# A daily request to the API (with a database query) keeps both awake.
+on:
+  schedule:
+    - cron: "41 6 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    if: vars.API_URL != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake the API and touch the database
+        env:
+          API_URL: ${{ vars.API_URL }}
+        run: |
+          for i in $(seq 1 12); do
+            curl -fsS --max-time 30 "${API_URL%/}/api/health?deep=1" && exit 0
+            echo "API not ready yet (attempt $i), waiting for it to wake up..."
+            sleep 20
+          done
+          exit 1

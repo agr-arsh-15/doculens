@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import re
@@ -86,6 +87,13 @@ class LLMProvider:
     fallback_models: List[str] = field(default_factory=list)
     last_rate_limits: Optional[Dict[str, str]] = None
     models_used: Set[str] = field(default_factory=set)
+    bucket: str = ""
+    owned_by_user: bool = False
+
+    @property
+    def _bucket(self) -> str:
+        """Rate-limit bucket: one per provider for the server key, one per key for users' own keys."""
+        return self.bucket or self.name
 
     @property
     def models(self) -> List[str]:
@@ -93,10 +101,10 @@ class LLMProvider:
 
     def _pick_model(self, max_tokens: int) -> str:
         usable = [m for m in self.models if f"{self.name}:{m}" not in _unavailable
-                  and max_tokens < _too_small.get(f"{self.name}:{m}", max_tokens + 1)]
+                  and max_tokens < _too_small.get(f"{self._bucket}:{m}", max_tokens + 1)]
         if not usable:
             raise LLMFatalError(f"no usable {self.name} model ({', '.join(self.models)}) for this request; set LLM_MODEL")
-        waits = [(_ready_in(f"{self.name}:{m}"), m) for m in usable]
+        waits = [(_ready_in(f"{self._bucket}:{m}"), m) for m in usable]
         ready = next((m for w, m in waits if w == 0), None)
         if ready:
             return ready
@@ -120,7 +128,7 @@ class LLMProvider:
                 payload["reasoning_effort"] = config.LLM_REASONING_EFFORT
             else:
                 payload.pop("reasoning_effort", None)
-            key = f"{self.name}:{model}"
+            key = f"{self._bucket}:{model}"
             try:
                 resp = requests.post(self.url, json=payload, headers=headers, timeout=config.LLM_TIMEOUT_SECONDS)
             except requests.RequestException as exc:
@@ -153,7 +161,7 @@ class LLMProvider:
                 raise LLMFatalError(f"{self.name} rejected the API key (HTTP {resp.status_code})")
             if resp.status_code == 404 or "decommissioned" in resp.text or "model_not_found" in resp.text:
                 log.warning("LLM model %s unavailable: %s", model, resp.text[:200])
-                _unavailable.add(key)
+                _unavailable.add(f"{self.name}:{model}")
                 _cool(key, _UNAVAILABLE_SECONDS)
                 continue
             if resp.status_code in (500, 502, 503, 504):
@@ -208,6 +216,22 @@ def get_provider() -> Optional[LLMProvider]:
     fallbacks = config.LLM_FALLBACK_MODELS if config.LLM_FALLBACK_MODELS is not None else default_fallbacks
     return LLMProvider(name=name, model=config.LLM_MODEL or default_model, url=url, api_key=keys[name],
                        fallback_models=list(fallbacks))
+
+
+def user_provider(api_key: str, name: str = "groq") -> LLMProvider:
+    """A provider that bills the user's own key and has its own rate-limit bucket."""
+    url, default_model, default_fallbacks = _PROVIDERS[name]
+    fingerprint = hashlib.sha256(api_key.encode()).hexdigest()[:12]
+    return LLMProvider(name=name, model=default_model, url=url, api_key=api_key, fallback_models=list(default_fallbacks),
+                       bucket=f"{name}-user-{fingerprint}", owned_by_user=True)
+
+
+def validate_key(provider: LLMProvider) -> None:
+    """Raise LLMFatalError if the provider rejects the key; a rate limit still proves the key is valid."""
+    try:
+        provider.chat_json('Respond with JSON only: {"ok": true}', "Key check.", max_tokens=400)
+    except LLMRateLimitError:
+        return
 
 
 def provider_status() -> Dict[str, Any]:

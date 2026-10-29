@@ -33,6 +33,9 @@ export default defineConfig({
         DOCULENS_DATA_DIR: mkdtempSync(join(tmpdir(), 'doculens-e2e-')),
         DISABLE_NEURAL_EMBEDDINGS: '1',
         LLM_PROVIDER: 'none',
+        AUTH_MODE: 'test',
+        ADMIN_EMAILS: 'admin@example.com',
+        STORAGE_BACKEND: 'local',
         CORS_ORIGINS: `http://127.0.0.1:${WEB_PORT}`,
       },
     },
@@ -41,7 +44,7 @@ export default defineConfig({
       url: `http://127.0.0.1:${WEB_PORT}`,
       timeout: 60_000,
       reuseExistingServer: false,
-      env: { VITE_API_PROXY: `http://127.0.0.1:${API_PORT}` },
+      env: { VITE_API_PROXY: `http://127.0.0.1:${API_PORT}`, VITE_AUTH_MODE: 'test' },
     },
   ],
 })

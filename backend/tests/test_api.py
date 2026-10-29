@@ -13,7 +13,7 @@ DOCS = Path(__file__).parent / "fixtures" / "documents"
 
 @pytest.fixture(scope="module")
 def client():
-    with TestClient(app) as c:
+    with TestClient(app, headers={"Authorization": "Bearer test-alice@example.com"}) as c:
         yield c
 
 
@@ -85,7 +85,9 @@ def test_upload_detects_document_and_dedupes(client):
 
 @pytest.mark.parametrize("name,payload,code", [
     ("empty.txt", b"", 400),
-    ("legacy.doc", b"\xd0\xcf\x11\xe0 not really a word file", 422),
+    ("legacy.doc", b"\xd0\xcf\x11\xe0 not really a word file", 415),
+    ("fake.pdf", b"this is not a pdf at all but long enough to parse", 415),
+    ("script.exe", b"MZ binary", 415),
 ])
 def test_upload_rejects_bad_files(client, name, payload, code):
     r = client.post("/api/documents", files={"file": (name, payload, "application/octet-stream")})

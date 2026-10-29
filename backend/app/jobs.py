@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 
 from app.analysis.engine import run_analysis
 from app.classify.parties import extract_parties
+from app.llm.provider import LLMProvider
 from app.models.schemas import Clause, Detection
 from app.playbooks.loader import get_playbook
 from app.storage import db
@@ -62,7 +63,8 @@ def _finding_counts(result) -> dict:
     return counts
 
 
-def _run(job: Job, doc: db.DocumentRow, doc_type: str, perspective: str, jurisdiction: str, use_llm: bool, privacy_mode: bool):
+def _run(job: Job, doc: db.DocumentRow, user_id: str, doc_type: str, perspective: str, jurisdiction: str,
+         provider: Optional[LLMProvider], privacy_mode: bool, notices: List[str]):
     db.update_analysis(job.id, status="running")
     for stage, label, pct in _UPLOAD_STAGES:
         job.publish({"stage": stage, "label": label, "progress": pct, "status": "running"})
@@ -79,8 +81,8 @@ def _run(job: Job, doc: db.DocumentRow, doc_type: str, perspective: str, jurisdi
         result = run_analysis(
             analysis_id=job.id, document_id=doc.id, filename=doc.filename, text=doc.text, clauses=clauses,
             parties=parties,
-            doc_type=doc_type, perspective=perspective, jurisdiction=jurisdiction, use_llm=use_llm,
-            privacy_mode=privacy_mode, progress=progress,
+            doc_type=doc_type, perspective=perspective, jurisdiction=jurisdiction, use_llm=provider is not None,
+            privacy_mode=privacy_mode, progress=progress, provider=provider, notices=notices,
         )
         degraded = {"cache_key": ""} if result.engine.llm_failed_batches else {}
         db.update_analysis(
@@ -89,11 +91,17 @@ def _run(job: Job, doc: db.DocumentRow, doc_type: str, perspective: str, jurisdi
             perspective=result.perspective, jurisdiction=result.jurisdiction,
             finding_counts_json=json.dumps(_finding_counts(result)), engine_mode=result.engine.mode,
         )
+        db.record_event(user_id, "analysis", doc_type=result.doc_type, jurisdiction=result.jurisdiction,
+                        mode=result.engine.mode, score=result.scorecard.overall,
+                        own_key=bool(provider and provider.owned_by_user))
+        if provider is not None and result.engine.llm_failed_batches:
+            db.record_event(user_id, "llm_fallback", failed_batches=result.engine.llm_failed_batches)
         job.publish({"stage": "done", "label": "Analysis complete", "progress": 100, "status": "completed"})
-    except Exception as exc:  # surface any engine failure to the client instead of hanging the stream
+    except Exception:  # surface any engine failure to the client instead of hanging the stream
         log.exception("Analysis %s failed", job.id)
-        message = f"Analysis failed: {exc}"[:500]
+        message = "Analysis failed because of an internal error. Please try again."
         db.update_analysis(job.id, status="failed", error=message)
+        db.record_event(user_id, "analysis_failed", doc_type=doc_type)
         job.publish({"stage": "error", "label": message, "progress": 100, "status": "failed"})
     finally:
         job.done = True
@@ -101,12 +109,12 @@ def _run(job: Job, doc: db.DocumentRow, doc_type: str, perspective: str, jurisdi
             job.cond.notify_all()
 
 
-def submit(analysis_id: str, doc: db.DocumentRow, *, doc_type: str, perspective: str, jurisdiction: str,
-           use_llm: bool, privacy_mode: bool) -> Job:
+def submit(analysis_id: str, doc: db.DocumentRow, *, user_id: str, doc_type: str, perspective: str,
+           jurisdiction: str, provider: Optional[LLMProvider], privacy_mode: bool, notices: List[str]) -> Job:
     _gc()
     job = Job(id=analysis_id)
     with _lock:
         _jobs[analysis_id] = job
     job.publish({"stage": "queued", "label": "Queued", "progress": 1, "status": "queued"})
-    _executor.submit(_run, job, doc, doc_type, perspective, jurisdiction, use_llm, privacy_mode)
+    _executor.submit(_run, job, doc, user_id, doc_type, perspective, jurisdiction, provider, privacy_mode, notices)
     return job

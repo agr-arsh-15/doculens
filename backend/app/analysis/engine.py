@@ -13,7 +13,7 @@ from app.analysis.scoring import score_findings
 from app.analysis.summary import build_summary
 from app.classify.jurisdiction import JURISDICTION_LABELS
 from app.config import DISCLAIMER, PROMPT_VERSION
-from app.llm.provider import get_provider
+from app.llm.provider import LLMProvider, get_provider
 from app.llm.redact import Redactor
 from app.models.schemas import AnalysisResult, Clause, EngineStats, Finding, Party
 from app.nlp.embeddings import embedder
@@ -46,6 +46,8 @@ def run_analysis(
     use_llm: bool,
     privacy_mode: bool,
     progress: Optional[ProgressFn] = None,
+    provider: Optional[LLMProvider] = None,
+    notices: Optional[List[str]] = None,
 ) -> AnalysisResult:
     report = progress or (lambda stage, label, pct: None)
     timings = {}
@@ -53,9 +55,10 @@ def run_analysis(
     persp = playbook.perspective(perspective)
     ctx = AnalysisContext(text=text, clauses=[c.model_copy(deep=True) for c in clauses], playbook=playbook,
                           perspective=persp, jurisdiction=jurisdiction)
-    provider = get_provider() if use_llm else None
+    if provider is None and use_llm:
+        provider = get_provider()
     redactor = Redactor(strict=privacy_mode, names=[p.name.split(' ("')[0] for p in parties])
-    warnings: List[str] = []
+    warnings: List[str] = list(notices or [])
 
     def stage(key: str, pct: int):
         label = dict(STAGES)[key]

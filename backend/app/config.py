@@ -44,6 +44,53 @@ CORS_ORIGINS = [
     if o.strip()
 ]
 
+# --- Deployment ----------------------------------------------------------------
+APP_ENV = os.getenv("APP_ENV", "development").strip().lower()
+IS_PRODUCTION = APP_ENV == "production"
+
+# Database: Postgres in production (Supabase), SQLite file locally and in tests.
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip() or f"sqlite:///{DB_PATH}"
+
+# Auth: "supabase" verifies Supabase JWTs (required in production); "local" signs everyone in as one local
+# admin for running on a laptop without accounts; "test" accepts "test-<email>" bearer tokens for automated tests.
+AUTH_MODE = os.getenv("AUTH_MODE", "local").strip().lower()
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "").strip()  # only for projects on legacy HS256 keys
+SUPABASE_STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET", "documents").strip()
+
+
+def supabase_service_headers() -> dict:
+    """New sb_secret_ keys go only in the apikey header; legacy service_role JWTs also go in Authorization."""
+    key = SUPABASE_SERVICE_ROLE_KEY
+    return {"apikey": key} if key.startswith("sb_") else {"apikey": key, "Authorization": f"Bearer {key}"}
+
+
+ADMIN_EMAILS = {e.strip().lower() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()}
+LOCAL_USER_EMAIL = os.getenv("LOCAL_USER_EMAIL", "you@localhost").strip().lower()
+
+# File storage for original uploads: "supabase" (private bucket) or "local" (DOCULENS_DATA_DIR/files).
+STORAGE_BACKEND = os.getenv("STORAGE_BACKEND", "supabase" if AUTH_MODE == "supabase" else "local").strip().lower()
+
+# Fernet key that encrypts users' own LLM API keys at rest. Generate with:
+#   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY", "").strip()
+
+# Default daily quotas on the server's own LLM key (admins can change them at runtime).
+DEFAULT_AI_DAILY_LIMIT = int(os.getenv("DEFAULT_AI_DAILY_LIMIT", "3"))
+DEFAULT_CHAT_DAILY_LIMIT = int(os.getenv("DEFAULT_CHAT_DAILY_LIMIT", "20"))
+
+# Requests per minute per user (or per IP before sign-in) on expensive routes.
+RATE_LIMIT_UPLOADS = os.getenv("RATE_LIMIT_UPLOADS", "10/minute")
+RATE_LIMIT_ANALYSES = os.getenv("RATE_LIMIT_ANALYSES", "6/minute")
+RATE_LIMIT_CHAT = os.getenv("RATE_LIMIT_CHAT", "20/minute")
+RATE_LIMIT_DEFAULT = os.getenv("RATE_LIMIT_DEFAULT", "120/minute")
+
+if IS_PRODUCTION and AUTH_MODE != "supabase":
+    raise RuntimeError("APP_ENV=production requires AUTH_MODE=supabase")
+if IS_PRODUCTION and not ENCRYPTION_KEY:
+    raise RuntimeError("APP_ENV=production requires ENCRYPTION_KEY")
+
 PROMPT_VERSION = "2026.10.1"
 
 DISCLAIMER = (

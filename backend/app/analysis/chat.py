@@ -1,11 +1,11 @@
 """Ask-the-document: retrieval over this document's clauses, answered by the LLM with clause citations."""
 import logging
 import re
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 
-from app.llm.provider import LLMError, get_provider
+from app.llm.provider import LLMError, LLMProvider
 from app.llm.redact import Redactor
 from app.models.schemas import AnalysisResult, ChatMessage, ChatResponse, Citation, Clause
 from app.nlp.embeddings import embedder
@@ -53,11 +53,11 @@ def _excerpt(text: str, limit: int = 220) -> str:
     return text if len(text) <= limit else text[:limit].rsplit(" ", 1)[0] + "..."
 
 
-def answer_question(result: AnalysisResult, question: str, history: List[ChatMessage]) -> ChatResponse:
+def answer_question(result: AnalysisResult, question: str, history: List[ChatMessage],
+                    provider: Optional[LLMProvider] = None, notice: Optional[str] = None) -> ChatResponse:
     hits = retrieve(result, question)
     by_id = {c.id: c for c in result.clauses}
     related = [f for f in result.findings if set(f.clause_ids) & {c.id for c in hits} and not f.favorable]
-    provider = get_provider()
 
     if provider is not None and hits:
         redactor = Redactor(names=[p.name.split(' ("')[0] for p in result.parties])
@@ -83,7 +83,8 @@ def answer_question(result: AnalysisResult, question: str, history: List[ChatMes
 
     if not hits:
         return ChatResponse(answer="I could not find anything in this document related to that question.", citations=[], mode="retrieval")
-    lines = ["AI answers need an LLM key, so here are the passages of this document most relevant to your question:"]
+    lines = [notice or "AI answers are not available right now, so here are the passages of this document most "
+             "relevant to your question:"]
     for c in hits[:3]:
         lines.append(f"- [{c.id}] {clause_label(c)}: {_excerpt(_body(c), 260)}")
     if related:

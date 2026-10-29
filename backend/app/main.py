@@ -4,11 +4,15 @@ import logging
 import threading
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
-from app.api import analyses, documents, meta
-from app.config import CORS_ORIGINS, DISCLAIMER
+from app.api import admin, analyses, documents, me, meta
+from app.config import AUTH_MODE, CORS_ORIGINS, DISCLAIMER, IS_PRODUCTION
+from app.security import SecurityHeadersMiddleware, limiter
 from app.nlp.embeddings import embedder
 from app.playbooks.loader import load_playbooks
 from app.storage import db
@@ -67,21 +71,43 @@ app = FastAPI(
     description="Risk analysis for contracts, offer letters, terms of service and compliance documents. " + DISCLAIMER,
     version=meta.VERSION,
     lifespan=lifespan,
+    docs_url=None if IS_PRODUCTION else "/docs",
+    redoc_url=None,
+    openapi_url=None if IS_PRODUCTION else "/openapi.json",
 )
 
+app.state.limiter = limiter
+
+
+@app.exception_handler(RateLimitExceeded)
+async def _rate_limited(request: Request, exc: RateLimitExceeded):
+    return JSONResponse({"detail": "Too many requests. Please wait a minute and try again."}, status_code=429)
+
+
+@app.exception_handler(Exception)
+async def _unhandled(request: Request, exc: Exception):
+    logging.getLogger(__name__).exception("Unhandled error on %s %s", request.method, request.url.path)
+    return JSONResponse({"detail": "Something went wrong on our side. Please try again."}, status_code=500)
+
+
+app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_credentials=False,
-    allow_methods=["GET", "POST", "DELETE"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
+    max_age=600,
 )
 
 app.include_router(documents.router)
 app.include_router(analyses.router)
+app.include_router(me.router)
+app.include_router(admin.router)
 app.include_router(meta.router)
 
 
 @app.get("/")
 def root():
-    return {"service": "DocuLens API", "version": meta.VERSION, "docs": "/docs", "disclaimer": DISCLAIMER}
+    return {"service": "DocuLens API", "version": meta.VERSION, "auth": AUTH_MODE, "disclaimer": DISCLAIMER}

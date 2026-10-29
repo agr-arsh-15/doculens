@@ -28,33 +28,31 @@ export default function ProgressTracker({ analysisId, useLlm, onDone, onRetry })
   }, [onDone])
 
   useEffect(() => {
-    let closed = false
-    const es = new EventSource(api.eventsUrl(analysisId))
-    es.onmessage = (msg) => {
-      const event = JSON.parse(msg.data)
+    const controller = new AbortController()
+    let finished = false
+    const onEvent = (event) => {
       seen.current.add(event.stage)
       setCurrent(event)
       if (event.status === 'completed') {
-        closed = true
-        es.close()
+        finished = true
+        controller.abort()
         setTimeout(() => doneRef.current?.(), 450)
       } else if (event.status === 'failed') {
-        closed = true
-        es.close()
+        finished = true
+        controller.abort()
         setFailed(event.label)
       }
     }
-    es.onerror = () => {
-      if (closed) return
-      es.close()
+    const recover = () => {
+      if (finished || controller.signal.aborted) return
       api.analysisStatus(analysisId)
         .then((s) => (s.status === 'completed' ? doneRef.current?.() : setFailed(s.error || 'Lost connection to the analysis stream.')))
         .catch((e) => setFailed(e.message))
     }
-    return () => {
-      closed = true
-      es.close()
-    }
+    api.streamEvents(analysisId, onEvent, controller.signal).then(recover, (err) => {
+      if (err?.name !== 'AbortError') recover()
+    })
+    return () => controller.abort()
   }, [analysisId])
 
   const order = stages.map(([k]) => k)

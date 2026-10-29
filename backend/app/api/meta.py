@@ -1,6 +1,7 @@
 from typing import List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from sqlmodel import select
 
 from app.classify.jurisdiction import JURISDICTION_LABELS
 from app.llm.provider import provider_status
@@ -8,6 +9,7 @@ from app.models.schemas import HealthOut, Perspective, PlaybookClauseOut, Playbo
 from app.nlp.embeddings import embedder
 from app.playbooks.citations import source_links
 from app.playbooks.loader import CATEGORY_LABELS, load_playbooks
+from app.storage import db
 
 router = APIRouter(prefix="/api", tags=["meta"])
 
@@ -15,7 +17,14 @@ VERSION = "3.0.0"
 
 
 @router.get("/health", response_model=HealthOut)
-def health():
+def health(deep: bool = False):
+    """deep=1 also runs a database query (used by the daily keep-alive so the free database is not paused)."""
+    if deep:
+        try:
+            with db.session() as s:
+                s.exec(select(1)).one()
+        except Exception as exc:
+            raise HTTPException(503, "Database unavailable.") from exc
     return HealthOut(status="ok", llm=provider_status(), embeddings=embedder.status(),
                      playbooks=sorted(load_playbooks()), version=VERSION)
 

@@ -163,9 +163,12 @@ def test_degraded_analysis_is_not_cached(monkeypatch):
 
     from app.main import app
 
+    from app import usage
+
     monkeypatch.setattr(engine, "get_provider", RateLimitedProvider)
+    monkeypatch.setattr(usage, "get_provider", RateLimitedProvider)
     data = (Path(__file__).parent / "fixtures" / "documents" / "legal_nda_contract.txt").read_bytes()
-    with TestClient(app) as client:
+    with TestClient(app, headers={"Authorization": "Bearer test-fallback@example.com"}) as client:
         doc = client.post("/api/documents", files={"file": ("nda.txt", data, "text/plain")}).json()
         first = client.post("/api/analyses", json={"document_id": doc["id"]}).json()
         deadline = time.time() + 60
