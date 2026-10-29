@@ -1,0 +1,333 @@
+id: offer_letter
+name: Job Offer Letter
+version: "2026.10.29"
+description: Offer or appointment letters extended to a candidate, covering pay, joining, probation, notice and restrictive terms.
+detection:
+  title_keywords: ["offer letter", "letter of offer", "offer of employment", "appointment letter", "letter of appointment", "employment offer", "pleased to offer you"]
+  prototypes:
+    - "We are pleased to offer you the position of Software Engineer. Your annual cost to company (CTC) will be paid monthly. Your date of joining is ... You will be on probation for six months. Either party may terminate with notice."
+    - "Dear candidate, this letter confirms our offer of employment for the role of manager reporting to the director, with base salary, bonus, stock options, start date and at-will employment."
+perspectives:
+  - id: employee
+    label: Candidate / Employee
+    description: You received this offer and want to know what you are signing up for.
+    aliases: ["you", "employee", "candidate", "your"]
+  - id: employer
+    label: Employer / HR
+    description: You are issuing this offer and want to check it is fair and enforceable.
+    aliases: ["company", "employer", "we", "management", "the organisation", "the organization"]
+default_perspective: employee
+clauses:
+  - id: compensation
+    label: Compensation & CTC
+    category: financial
+    importance: critical
+    expected: true
+    missing:
+      severity: high
+      risk_for: [employee, employer]
+      explanation: The offer does not state the salary or CTC. Without a written figure the candidate cannot hold the employer to the agreed pay.
+    description: Base salary or CTC, payment frequency, and the split between fixed and variable pay.
+    keywords: ["base salary", "ctc", "cost to company", "annual salary", "gross salary", "remuneration", "compensation", "per annum", "fixed pay", "monthly salary"]
+    prototype: "Your annual base salary / cost to company (CTC) will be paid monthly, comprising fixed pay, variable pay and allowances."
+    market_standard: Pay is stated as an exact amount, and deductions from wages are limited to those the law permits (Code on Wages, 2019 s.18 in India; Fair Labor Standards Act in the US).
+    sources: [in_code_on_wages, us_flsa]
+    references: [in_code_on_wages, us_flsa]
+    suggested_redline: "Your fixed annual compensation will be [amount], paid monthly. Variable pay of up to [x]% will be paid against the written criteria set out in Annexure A and will not be withheld except as specified there."
+    red_flags:
+      - id: discretionary_variable
+        title: Variable pay is entirely at the employer's discretion
+        pattern: '(variable|bonus|incentive|performance pay)[^.]{0,160}(sole|absolute|full)\s+discretion|(sole|absolute)\s+discretion[^.]{0,120}(variable|bonus|incentive)'
+        severity: high
+        risk_for: [employee]
+        explanation: Part of the headline CTC may never be paid because the company can decide not to pay the variable or bonus component for any reason.
+        recommendation: Ask for written payout criteria, a minimum guaranteed payout, or a pro-rata payout if you leave mid-cycle.
+        redline: "Variable pay will be determined against the objective criteria in Annexure A and paid within 60 days of the end of each performance cycle."
+      - id: ctc_inflation
+        title: CTC includes non-cash or deferred components
+        pattern: '(ctc|cost to company)[^.]{0,250}(gratuity|employer.{0,10}(pf|provident fund)|insurance premium|retention bonus|joining bonus|esop)'
+        severity: medium
+        risk_for: [employee]
+        explanation: Gratuity, employer PF, insurance premiums and one-time bonuses inflate the CTC figure. Your actual monthly in-hand pay may be considerably lower.
+        recommendation: Request a component-wise breakup showing monthly take-home pay before accepting.
+        jurisdiction_notes:
+          IN: Gratuity is only payable after 5 years of continuous service under the Payment of Gratuity Act, 1972.
+  - id: probation
+    label: Probation
+    category: termination_exit
+    importance: medium
+    description: Initial evaluation period and the terms that apply during it.
+    keywords: ["probation", "probationary period", "confirmation", "evaluation period"]
+    prototype: "You will be on probation for a period of six months, which may be extended at the discretion of the company. On successful completion you will be confirmed."
+    market_standard: India commonly uses 3-6 months; the 2026 services-sector Model Standing Orders prescribe 6 months, extendable once by up to 3 months. US introductory periods usually last 30-90 days.
+    sources: [leglobal_india_contracts, jsa_mso_2026, shrm_probation]
+    metrics:
+      - id: probation_months
+        label: Probation length
+        unit: months
+        extractor: duration
+        context: ["probation", "evaluation period"]
+        scale_max: 12
+        worse_when: higher
+        risk_for: [employee]
+        severity_outside: medium
+        jurisdictions:
+          IN: {min: 0, max: 6, typical: 3, sources: [leglobal_india_contracts, jsa_mso_2026]}
+          US: {min: 0, max: 3, typical: 3, sources: [shrm_probation]}
+    red_flags:
+      - id: open_ended_probation
+        title: Probation can be extended indefinitely
+        pattern: 'probation[^.]{0,200}(extended|extend)[^.]{0,80}(discretion|as (?:it|the company) (?:deems|may deem)|further period)'
+        exclude_if: '(extended|extend)[^.]{0,40}(once|maximum|not exceeding|up to)'
+        severity: medium
+        risk_for: [employee]
+        explanation: The employer can keep extending probation, which leaves you on shorter notice and weaker protections for an open-ended period.
+        recommendation: Cap any extension at one additional period of up to 3 months, with written reasons.
+        redline: "Probation may be extended once, by up to three months, with written reasons provided to you."
+  - id: notice_period
+    label: Notice Period & Resignation
+    category: termination_exit
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [employee, employer]
+      explanation: No notice period is stated, so neither side knows how much warning is required to end employment.
+    description: How much notice each side must give, and whether pay in lieu of notice or a buyout is allowed.
+    keywords: ["notice period", "notice of resignation", "resign", "pay in lieu", "garden leave", "buyout", "relieving"]
+    prototype: "Either party may terminate employment by giving ninety days written notice or salary in lieu of notice. The company may waive the notice period."
+    market_standard: India uses 1-3 months, with 90 days the norm in large IT firms and 2-3 months common in banks. In the US employment is at will and two weeks is the standard courtesy notice; an employer that asks for notice should give the same notice in return.
+    sources: [et_notice_period, toi_notice_period, shrm_notice]
+    metrics:
+      - id: notice_days
+        label: Resignation notice
+        unit: days
+        extractor: duration
+        context: ["notice"]
+        scale_max: 180
+        worse_when: higher
+        risk_for: [employee]
+        severity_outside: medium
+        jurisdictions:
+          IN: {min: 30, max: 90, typical: 90, note: "90 days is the norm in large IT firms; banks and some IT firms use 2 months", sources: [et_notice_period, toi_notice_period]}
+          US: {min: 0, max: 30, typical: 14, note: "Two weeks is standard; four weeks is common for executives", sources: [shrm_notice]}
+    red_flags:
+      - id: asymmetric_notice
+        title: Notice period is longer for you than for the employer
+        pattern: '(company|employer)[^.]{0,120}(immediately|without notice|(\d+|seven|fifteen|thirty)\s*(\(\d+\)\s*)?days)[^.]{0,200}(you|employee)[^.]{0,80}(ninety|90|sixty|60|three months|two months)'
+        severity: medium
+        risk_for: [employee]
+        explanation: The employer can let you go at short notice, but you must serve a much longer notice period to leave.
+        recommendation: Ask for a symmetrical notice period, or for the employer's notice to be at least equal to yours.
+      - id: no_buyout
+        title: Notice period cannot be bought out
+        pattern: '(not|no)\s+(be\s+)?(permitted|allowed|entitled)[^.]{0,60}(buy\s*out|pay in lieu|shorten)|(buy\s*out|pay in lieu)[^.]{0,60}(not|no)\s+(be\s+)?(permitted|allowed|available)|(at (the|its) (sole )?discretion)[^.]{0,80}(buy\s*out|waive|release)'
+        severity: medium
+        risk_for: [employee]
+        explanation: You may be held to the full notice period even when a new employer wants you to join sooner.
+        recommendation: Ask for a right to buy out the notice period with basic salary for the unserved days.
+  - id: non_compete
+    label: Non-Compete
+    category: career_mobility
+    importance: high
+    description: Restrictions on working for competitors or starting a competing business after you leave.
+    keywords: ["non-compete", "not compete", "competing business", "competitor", "restrictive covenant", "restraint"]
+    prototype: "For a period of twelve months after termination you shall not directly or indirectly be employed by or engage in any business that competes with the company."
+    market_standard: Post-employment non-competes are void in California and generally void in India (s.27). In the UK they usually run 6-9 months, with 12 months the practical maximum for senior staff. In US states that allow them they must be reasonable in duration, geography and scope, and some states cap them at 12 months.
+    sources: [in_contract_act_s27, khaitan_covenants, us_ca_bpc_16600, mayerbrown_uk_covenants, aba_noncompete, seyfarth_noncompete]
+    references: [in_contract_act_s27, us_ca_bpc_16600]
+    metrics:
+      - id: non_compete_months
+        label: Non-compete duration
+        unit: months
+        extractor: duration
+        context: ["compet", "restrict", "engage in"]
+        scale_max: 36
+        worse_when: higher
+        risk_for: [employee]
+        severity_outside: high
+        jurisdictions:
+          IN: {min: 0, max: 0, typical: 0, note: "Post-employment non-competes are generally void under s.27 Indian Contract Act", sources: [in_contract_act_s27, khaitan_covenants]}
+          UK: {min: 0, max: 12, typical: 6, note: "Usually 6-9 months; 12 months only for very senior staff", sources: [mayerbrown_uk_covenants, littler_uk_covenants]}
+          US: {min: 0, max: 12, typical: 6, note: "Void in California; several states cap non-competes at 12 months", sources: [seyfarth_noncompete, aba_noncompete]}
+    red_flags:
+      - id: broad_non_compete
+        title: Overly broad post-employment non-compete
+        pattern: '(after|following|post)[^.]{0,80}(termination|cessation|leaving|separation|employment)[^.]{0,250}(compet|engage in|be employed by)|(compet|competing business)[^.]{0,200}(worldwide|anywhere|any (business|company|entity)|globally)'
+        severity: high
+        risk_for: [employee]
+        explanation: The clause restricts where you can work after you leave. A broad scope (any competitor, worldwide, or longer than 12 months) can block a large part of your job market.
+        recommendation: Delete the post-employment non-compete, or limit it to named direct competitors for at most 6 months, with garden-leave pay for that period.
+        redline: "For six months after your employment ends, you will not join the following named direct competitors: [list]. The Company will pay your fixed salary for that period."
+        sources: [in_contract_act_s27, us_ca_bpc_16600]
+        jurisdiction_notes:
+          IN: Post-employment non-competes are generally void under s.27 of the Indian Contract Act. They still discourage candidates and can lead to legal notices.
+          US: Enforceability varies by state. The 2024 FTC non-compete rule was set aside by the courts, so state law governs.
+        severity_by_jurisdiction:
+          IN: medium
+  - id: non_solicit
+    label: Non-Solicitation
+    category: career_mobility
+    importance: medium
+    description: Restrictions on soliciting clients or employees after you leave.
+    keywords: ["non-solicit", "solicit", "poach", "entice away", "induce any employee"]
+    prototype: "For twelve months after leaving you shall not solicit or entice away any employee, client or customer of the company."
+    market_standard: Limited to clients and colleagues you actually worked with. In India non-solicitation is enforced case by case, and up to 24 months has been treated as reasonable; in the UK restrictive covenants generally run 3-12 months.
+    sources: [khaitan_covenants, dlapiper_india_covenants, littler_uk_covenants]
+    metrics:
+      - id: non_solicit_months
+        label: Non-solicit duration
+        unit: months
+        extractor: duration
+        context: ["solicit", "entice", "poach"]
+        scale_max: 36
+        worse_when: higher
+        risk_for: [employee]
+        severity_outside: medium
+        jurisdictions:
+          IN: {min: 0, max: 24, typical: 12, sources: [khaitan_covenants]}
+          UK: {min: 0, max: 12, typical: 6, sources: [littler_uk_covenants]}
+  - id: ip_assignment
+    label: IP & Inventions Assignment
+    category: career_mobility
+    importance: high
+    description: Who owns the work, inventions and code you create.
+    keywords: ["intellectual property", "inventions", "work made for hire", "assign", "proprietary rights", "moral rights"]
+    prototype: "All inventions, works and intellectual property created by you during employment shall be the sole property of the company and you hereby assign all rights."
+    market_standard: The employer owns work made in the course of employment (the default rule in India and the UK). In California, inventions developed on your own time without company resources and unrelated to the business cannot be claimed.
+    sources: [in_copyright_s17, uk_cdpa_s11, uk_patents_s39, us_ca_lab_2870]
+    references: [us_ca_lab_2870, in_copyright_s17]
+    red_flags:
+      - id: ip_overreach
+        title: IP assignment covers personal time or unrelated work
+        pattern: '(whether or not|regardless of whether)[^.]{0,120}(working hours|company time|company resources|related to)|(outside|after)\s+(of\s+)?(working|office|business)\s+hours|during the (term|period) of (your )?employment[^.]{0,80}(any|all) (inventions|works|ideas)'
+        severity: high
+        risk_for: [employee]
+        explanation: The employer may claim ownership of side projects, open-source work or ideas you develop in your own time, with your own equipment.
+        recommendation: Limit assignment to work done in the course of employment, and attach a schedule of your prior inventions and excluded projects.
+        redline: "Assignment applies only to inventions made in the course of your duties or with Company resources. Inventions listed in Schedule B, and those developed entirely in your own time without Company resources that do not relate to the Company's business, are excluded."
+  - id: training_bond
+    label: Service Bond / Training Cost Recovery
+    category: financial
+    importance: high
+    description: An obligation to serve a minimum period or repay training, relocation or joining costs if you leave early.
+    keywords: ["service bond", "training bond", "minimum period of service", "serve the company for", "repay", "reimburse the company", "liquidated damages", "recover the cost"]
+    prototype: "You agree to serve the company for a minimum period of two years, failing which you shall pay liquidated damages of Rs 2,00,000 towards training costs."
+    market_standard: In India a minimum-service bond that applies during employment is valid if reasonable (Supreme Court, Vijaya Bank, 2025), but the employer can recover only reasonable compensation up to the stated amount (s.74), not an automatic penalty.
+    sources: [in_sc_vijaya_bank, in_contract_act_s74]
+    references: [in_contract_act_s74, in_sc_vijaya_bank]
+    red_flags:
+      - id: service_bond
+        title: Service bond or early-exit penalty
+        pattern: '(service|training|employment)\s+bond|minimum (period of )?service|(serve|remain with) the company for (a (minimum|period) of )?[^.]{0,30}(years?|months)|liquidated damages[^.]{0,120}(leave|resign|terminat)|(repay|reimburse|refund)[^.]{0,120}(training|joining|relocation|sign[- ]?on)[^.]{0,80}(leave|resign|within)'
+        severity: high
+        risk_for: [employee]
+        explanation: If you leave before a set date you must pay the company money. Penalties are often far larger than any real training cost.
+        recommendation: Ask for the bond to be removed, or pro-rated to documented training costs and reduced monthly for each month served.
+        redline: "If you resign within 12 months of joining, you will reimburse documented external training costs, reduced pro-rata for each completed month of service, up to a maximum of [amount]."
+        hidden_reason: Bond and repayment terms are often placed under joining, relocation or training headings instead of a clearly titled section.
+        jurisdiction_notes:
+          IN: A reasonable minimum-service bond can be valid (Vijaya Bank, 2025), but only reasonable compensation up to the stated amount is recoverable (s.74).
+      - id: document_retention
+        title: Employer retains original certificates or documents
+        pattern: '(retain|deposit|submit|surrender|keep)[^.]{0,80}(original)[^.]{0,60}(certificate|degree|marksheet|document|passport)'
+        severity: critical
+        risk_for: [employee]
+        explanation: Holding your original certificates or passport as security restricts your ability to leave and is widely regarded as unlawful.
+        recommendation: Refuse to deposit originals. Offer self-attested copies for verification only.
+  - id: termination
+    label: Termination by Employer
+    category: termination_exit
+    importance: high
+    description: Grounds and process for the employer ending employment, and any severance.
+    keywords: ["terminate", "termination", "dismiss", "without cause", "for cause", "severance", "at-will", "misconduct"]
+    prototype: "The company may terminate your employment with or without cause by giving notice or salary in lieu. Severance will be paid as per policy."
+    market_standard: Termination without cause comes with notice or pay in lieu. An employer that asks employees for notice should give the same notice in return, and UK law sets a statutory minimum notice from the employer.
+    sources: [shrm_notice, uk_era_s86]
+    red_flags:
+      - id: termination_without_notice
+        title: Employer can terminate immediately without notice or pay
+        pattern: 'terminat[^.]{0,100}(immediately|forthwith|without (any )?(prior )?notice)(?![^.]{0,60}(misconduct|cause|fraud|breach))'
+        severity: high
+        risk_for: [employee]
+        explanation: You can be let go with no notice and no pay in lieu, even when you have done nothing wrong.
+        recommendation: Require notice or pay in lieu for termination without cause, at least equal to your own notice period.
+  - id: transfer_relocation
+    label: Transfer, Deputation & Role Changes
+    category: career_mobility
+    importance: medium
+    description: The employer's right to change your location, entity, role or shift.
+    keywords: ["transfer", "relocate", "deputation", "deputed", "any location", "group company", "affiliate", "shift"]
+    prototype: "You may be transferred to any location, department or group company in India or abroad at the discretion of the management."
+    red_flags:
+      - id: unilateral_transfer
+        title: Can be transferred anywhere, or to another entity, without consent
+        pattern: '(transfer|depute|deputation|relocat)[^.]{0,160}(any (location|place|city|office|department|group company|affiliate|subsidiary)|anywhere|sole discretion)'
+        severity: medium
+        risk_for: [employee]
+        explanation: The company can move you to another city, role, shift or legal entity without your agreement. Refusing could count as misconduct.
+        recommendation: Limit transfers to the offered city unless you consent, with relocation support and no change in pay or entity.
+  - id: confidentiality
+    label: Confidentiality
+    category: legal_exposure
+    importance: medium
+    description: Duty to protect company confidential information.
+    keywords: ["confidential", "proprietary information", "trade secret", "non-disclosure"]
+    prototype: "You shall keep confidential all proprietary information of the company during and after your employment."
+    market_standard: Trade secrets stay protected while they remain secret; other business information is usually protected for 2-5 years. Confidentiality terms cannot stop protected whistleblowing (UK ERA s.43J; US 18 U.S.C. 1833(b)).
+    sources: [moritthock_nda, aba_nda, uk_era_s43j, us_dtsa_1833]
+  - id: background_check
+    label: Background Verification & Conditions
+    category: privacy_data
+    importance: low
+    description: Conditions precedent such as background checks, references and document submission.
+    keywords: ["background verification", "background check", "reference check", "subject to verification", "contingent upon"]
+    prototype: "This offer is contingent upon satisfactory background verification and reference checks."
+    market_standard: Checks only with the candidate's written consent, a copy of the report before any adverse decision (US FCRA), and personal data processed with consent for a stated purpose (India DPDP Act).
+    sources: [us_ftc_fcra_employers, in_dpdp_act]
+    red_flags:
+      - id: revoke_anytime
+        title: Offer can be withdrawn at any time, even after joining
+        pattern: '(withdraw|revoke|rescind|cancel)[^.]{0,80}(offer|appointment)[^.]{0,120}(any time|without (assigning )?(any )?reason|sole discretion|even after)'
+        severity: medium
+        risk_for: [employee]
+        explanation: The company keeps the right to cancel the offer, even after you have resigned from your current job.
+        recommendation: Ask for withdrawal to be limited to failed background verification, with written reasons.
+  - id: governing_law
+    label: Governing Law & Disputes
+    category: legal_exposure
+    importance: low
+    description: Which law governs, and where disputes are heard.
+    keywords: ["governed by", "jurisdiction", "courts of", "arbitration", "dispute"]
+    prototype: "This agreement is governed by the laws of India and the courts at Bengaluru shall have exclusive jurisdiction."
+    market_standard: Disputes go to the courts or to a neutral arbitrator. In India, one side cannot appoint the sole arbitrator (Perkins Eastman 2019; CORE 2024), and in the EU an employee keeps the protection of the law of the place where they habitually work (Rome I, Art. 8).
+    sources: [in_sc_perkins, in_sc_core, eu_rome1_art8]
+    red_flags:
+      - id: employer_appoints_arbitrator
+        title: Employer appoints the sole arbitrator
+        pattern: 'arbitrat[^.]{0,120}(appointed|nominated|chosen) (solely )?by the (company|employer)'
+        severity: high
+        risk_for: [employee]
+        explanation: The employer gets to pick the person who decides disputes against it.
+        jurisdiction_notes:
+          IN: Indian courts treat unilateral appointment of a sole arbitrator as invalid, so you could challenge it, but only after a costly fight.
+        recommendation: Require a neutral or jointly appointed arbitrator, or use the courts.
+        redline: "Any dispute shall be referred to a sole arbitrator appointed jointly by the parties or, failing agreement, under the Arbitration and Conciliation Act, 1996."
+        sources: [in_sc_perkins, in_sc_core, in_arbitration_act]
+hidden_patterns:
+  - id: policy_incorporation
+    title: Terms can change through company policies "as amended from time to time"
+    pattern: '(polic(y|ies)|handbook|rules|code of conduct)[^.]{0,120}(amended|modified|updated|revised|changed)\s+from\s+time\s+to\s+time'
+    severity: medium
+    risk_for: [employee]
+    explanation: Important terms such as leave, bonus or notice can change without your consent through documents that are not attached to this offer.
+    recommendation: Ask for copies of the referenced policies, and confirm that changes to pay, notice or bonus require your written consent.
+    hidden_reason: Binding terms live in external documents that you have not been shown.
+  - id: clawback
+    title: Joining or relocation bonus clawback
+    pattern: '(joining|sign[- ]?on|relocation|retention)\s+(bonus|amount|allowance)[^.]{0,200}(repay|refund|return|recover|claw\s*back)'
+    severity: medium
+    risk_for: [employee]
+    explanation: Bonus money you receive may have to be repaid in full if you leave before a set date.
+    recommendation: Make any repayment pro-rated for months served, and waived if the company terminates you without cause.
+    hidden_reason: Repayment conditions are attached to a benefit, so they read as a perk rather than an obligation.

@@ -1,0 +1,34 @@
+# Hand-labeled expectations for tests/fixtures/documents/india_offer_letter.txt, read as the candidate.
+# required:   issues a careful reviewer must raise (recall is measured over these).
+# acceptable: legitimate optional flags; matching findings count as true positives.
+# forbidden:  known false positives that must never reappear.
+# Labels match finding titles by case-insensitive regex.
+sample: india_offer_letter.txt
+doc_type: offer_letter
+jurisdiction: IN
+perspective: employee
+score_max: 40
+required:
+  - {id: original_documents, title: "original (certificates|documents)", min_severity: high}
+  - {id: variable_pay_discretion, title: "variable pay", min_severity: medium}
+  - {id: service_bond, title: "service bond|early-exit", min_severity: high}
+  - {id: termination_without_notice, title: "terminate immediately|without notice", min_severity: medium}
+  - {id: ip_overreach, title: "IP assignment|inventions", min_severity: medium}
+  - {id: unilateral_arbitrator, title: "appoints the sole arbitrator", min_severity: medium}
+  - {id: missing_annexure, title: "Annexure A", kind: hidden}
+  - {id: probation_extension, title: "probation", min_severity: low}
+  - {id: notice_buyout, title: "bought out|buy-?out", min_severity: low}
+  - {id: transfer_anywhere, title: "transferred", min_severity: low}
+  - {id: non_compete, title: "non-compete", min_severity: medium}
+  - {id: policies_incorporated, title: "polic(y|ies)", kind: hidden}
+  - {id: conflicting_notice, title: "conflicting notice", min_severity: medium}
+  - {id: offer_withdrawal, title: "withdrawn", min_severity: low}
+acceptable:
+  - {id: one_sided, title: "one-sided"}
+forbidden:
+  - {id: generic_penalty_dup, title: "^Financial penalty or repayment"}
+  - {id: missing_compensation, title: "^Missing: Compensation"}
+benchmarks:
+  - {metric: non_compete_months, value: 12, position: above_market}
+  - {metric: notice_days, value: 90, position: market}
+  - {metric: probation_months, value: 6, position: market}

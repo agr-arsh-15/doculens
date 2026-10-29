@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: doculens-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    disk:
+      name: doculens-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: CORS_ORIGINS
+        value: https://your-frontend.vercel.app
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false

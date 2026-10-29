@@ -1,0 +1,252 @@
+id: msa_saas
+name: Master Services / SaaS Agreement
+version: "2026.10.29"
+description: Commercial B2B agreements for services or software subscriptions (MSA, SaaS, subscription, vendor and licence agreements).
+detection:
+  title_keywords: ["master services agreement", "master service agreement", "msa", "subscription agreement", "saas agreement", "software license agreement", "services agreement", "statement of work", "order form", "vendor agreement"]
+  prototypes:
+    - "This Master Services Agreement governs the provision of services by the Provider to the Customer. Fees and payment terms, service levels, warranties, limitation of liability, indemnification, intellectual property, term and renewal, termination, data protection."
+    - "Subscription agreement for cloud software services including subscription fees, uptime SLA, support, customer data, acceptable use, auto renewal and liability cap."
+perspectives:
+  - id: customer
+    label: Customer / Buyer
+    description: You are buying the services or software.
+    aliases: ["customer", "client", "licensee", "buyer", "subscriber"]
+  - id: vendor
+    label: Vendor / Provider
+    description: You are providing the services or software.
+    aliases: ["provider", "vendor", "supplier", "licensor", "service provider", "company"]
+default_perspective: customer
+clauses:
+  - id: liability_cap
+    label: Limitation of Liability
+    category: financial
+    importance: critical
+    expected: true
+    missing:
+      severity: high
+      risk_for: [customer, vendor]
+      explanation: Without a liability clause, exposure for both parties is uncapped and indirect losses are not excluded.
+    description: Caps on damages and exclusion of indirect losses.
+    keywords: ["limitation of liability", "aggregate liability", "in no event shall", "consequential damages", "indirect damages", "total liability", "liability cap"]
+    prototype: "Each party's aggregate liability shall not exceed the fees paid in the twelve months preceding the claim, and neither party is liable for indirect or consequential damages."
+    market_standard: A mutual cap linked to fees - an annual or 12-month cap is the most common structure (48% of technology contracts), and US contracts often go to 200% of fees. Breach of confidentiality is usually left uncapped, while a separate higher cap for data-related liability appears in only about 1 in 5 contracts.
+    sources: [nrf_liability_benchmark]
+    metrics:
+      - id: liability_cap_months
+        label: Liability cap (months of fees)
+        unit: months
+        extractor: duration
+        context: ["liab", "exceed", "fees paid", "amounts paid"]
+        range: {min: 12, max: 24, typical: 12, sources: [nrf_liability_benchmark]}
+        scale_max: 36
+        worse_when: lower
+        risk_for: [customer]
+        severity_outside: high
+    red_flags:
+      - id: one_sided_cap
+        title: Liability cap protects only the vendor
+        pattern: '(provider|vendor|supplier|licensor|company)(.s|s)?\s+(aggregate |total |maximum )?liability[^.]{0,160}exceed'
+        exclude_if: '(each party|either party|neither party|both parties)'
+        severity: high
+        risk_for: [customer]
+        explanation: The vendor's liability is capped, but yours is not. You carry unlimited exposure while the vendor's is limited.
+        recommendation: Make the cap mutual, and add a super-cap for data breaches.
+        redline: "Except for Excluded Claims, each party's aggregate liability shall not exceed the fees paid or payable in the twelve (12) months preceding the event giving rise to the claim."
+      - id: tiny_cap
+        title: Liability cap is nominal
+        pattern: '(not exceed|limited to|capped at)[^.]{0,60}(\$|usd|inr|rs\.?|₹)\s?\d{1,3}(,\d{3})?(\.\d+)?\b(?![\d,])|(one|three|1|3) \(?\d?\)?\s*months?.{0,20}fees'
+        severity: high
+        risk_for: [customer]
+        explanation: The cap is so low that it covers almost none of your potential losses from an outage or data breach.
+        recommendation: Raise the cap to at least the fees for 12 months.
+  - id: indemnification
+    label: Indemnification
+    category: financial
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [customer]
+      explanation: There is no IP infringement indemnity from the vendor. If the software infringes someone's rights, you bear the claims.
+    description: Who defends whom against third-party claims.
+    keywords: ["indemnify", "indemnification", "hold harmless", "defend", "third-party claim", "infringement claim"]
+    prototype: "Provider shall defend and indemnify Customer against third-party claims that the Services infringe intellectual property rights."
+    market_standard: The vendor indemnifies the customer against third-party IP infringement claims, and this indemnity is usually uncapped (78% of technology contracts); the customer's indemnity is limited to claims caused by its own data and misuse.
+    sources: [nrf_liability_benchmark]
+    red_flags:
+      - id: customer_broad_indemnity
+        title: Broad customer indemnity
+        pattern: '(customer|client|licensee|you)[^.]{0,40}(shall|will|agree to)[^.]{0,30}(defend,? )?(indemnify|hold harmless)[^.]{0,200}(any and all|all claims|arising out of or (in connection|relating))'
+        severity: high
+        risk_for: [customer]
+        explanation: You must cover the vendor's losses for nearly anything connected to the agreement, including problems the vendor causes.
+        recommendation: Limit your indemnity to claims caused by your own data, breach or misuse.
+  - id: fees_payment
+    label: Fees & Payment Terms
+    category: financial
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [customer, vendor]
+      explanation: There are no payment terms, so the price and payment timing are unclear.
+    description: Pricing, invoicing, payment terms, late fees and price increases.
+    keywords: ["fees", "invoice", "payment terms", "net 30", "late payment", "interest", "price increase", "pricing"]
+    prototype: "Customer shall pay all invoices within thirty days of receipt. Late payments accrue interest. Fees may increase upon renewal."
+    market_standard: Payment within 30 days of invoice by default; EU law generally caps agreed business payment terms at 60 days and sets statutory late interest of the reference rate plus 8 points a year (the UK uses 8% above base rate).
+    sources: [eu_late_payment, uk_late_payment]
+    metrics:
+      - id: payment_days
+        label: Payment terms
+        unit: days
+        extractor: duration
+        context: ["invoice", "payment", "payable", "net"]
+        range: {min: 30, max: 60, typical: 30, sources: [eu_late_payment]}
+        scale_max: 90
+        worse_when: lower
+        risk_for: [customer]
+        severity_outside: low
+    red_flags:
+      - id: uncapped_price_increase
+        title: Vendor can raise prices without a cap
+        pattern: '(increase|change|modify|revise)[^.]{0,40}(fees|prices|pricing|rates)[^.]{0,100}(at any time|sole discretion|upon notice|by notice)'
+        exclude_if: '(not exceed|capped|no more than|maximum of)\s'
+        severity: medium
+        risk_for: [customer]
+        explanation: Your costs can increase without limit during the term or at renewal.
+        recommendation: Cap annual increases (for example, at the lower of CPI or 5%) and require 90 days' notice.
+  - id: term_renewal
+    label: Term & Auto-Renewal
+    category: termination_exit
+    importance: high
+    description: Initial term, renewal mechanics and non-renewal notice.
+    keywords: ["initial term", "renewal", "automatically renew", "renewal term", "non-renewal", "subscription term"]
+    prototype: "The Agreement renews automatically for successive one-year terms unless either party gives notice of non-renewal at least sixty days before the end of the term."
+    market_standard: Renewal only alongside a clear non-renewal window and a written reminder before it closes - New York requires such a reminder for automatically renewing service contracts, including business ones.
+    sources: [us_ny_gol_5903]
+  - id: termination
+    label: Termination Rights
+    category: termination_exit
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [customer, vendor]
+      explanation: There are no termination rights, so it is unclear how either party can exit.
+    description: Termination for cause and for convenience, cure periods, and effects of termination.
+    keywords: ["terminate", "termination for cause", "material breach", "cure period", "for convenience", "effect of termination"]
+    prototype: "Either party may terminate for material breach not cured within thirty days of written notice. On termination Customer may export its data."
+    market_standard: A mutual right to terminate for material breach after written notice and a reasonable opportunity to cure.
+    sources: [faegre_material_breach]
+    red_flags:
+      - id: vendor_convenience_only
+        title: Only the vendor may terminate for convenience
+        pattern: '(provider|vendor|supplier|licensor|company|we)[^.]{0,60}(may|can) terminat[^.]{0,80}(for (any|no) reason|for convenience|at any time)'
+        exclude_if: '(either party|each party)'
+        severity: high
+        risk_for: [customer]
+        explanation: The vendor can walk away at any time, leaving you without a service you depend on.
+        recommendation: Make convenience termination mutual, with at least 90 days' notice and a pro-rata refund.
+  - id: data_protection
+    label: Data Protection & Security
+    category: privacy_data
+    importance: high
+    expected: true
+    missing:
+      severity: high
+      risk_for: [customer]
+      explanation: There are no data protection or security commitments for the data you upload.
+    description: Security commitments, DPA, breach notification and data return.
+    keywords: ["customer data", "personal data", "data processing agreement", "security measures", "breach notification", "encryption", "dpa"]
+    prototype: "Provider shall implement appropriate technical and organisational measures, process personal data per the DPA, and notify Customer of a data breach without undue delay."
+    market_standard: A data processing agreement meeting GDPR Art. 28 (including return or deletion of data when the service ends), independent security assurance such as SOC 2 or ISO/IEC 27001, and breach notice to the customer within a fixed number of hours, well inside the controller's 72-hour regulatory deadline.
+    sources: [gdpr_art28, gdpr_art32_34, edpb_09_2022, foxrothschild_dpa, aicpa_soc2, iso_27001]
+    metrics:
+      - id: breach_notice_hours
+        label: Breach notification window
+        unit: hours
+        extractor: duration
+        context: ["breach", "incident", "notif"]
+        exclude_context: ["supervisory authority", "regulator", "authorities"]
+        range: {min: 0, max: 72, typical: 48, sources: [gdpr_art32_34, edpb_09_2022, foxrothschild_dpa]}
+        scale_max: 240
+        worse_when: higher
+        risk_for: [customer]
+        severity_outside: high
+    red_flags:
+      - id: data_use_rights
+        title: Vendor can use your data for its own purposes
+        pattern: '(use|exploit|commerciali[sz]e)[^.]{0,80}(customer data|your data|usage data|aggregated data)[^.]{0,120}(any purpose|improve|train|develop|own purposes|machine learning|ai model)'
+        severity: high
+        risk_for: [customer]
+        explanation: Your business data can be used to train AI models or build products for others.
+        recommendation: Limit vendor use to providing the service. Permit only anonymised aggregate statistics, with an opt-out from AI training.
+  - id: sla
+    label: Service Levels & Remedies
+    category: financial
+    importance: medium
+    description: Uptime commitments, support response times and service credits.
+    keywords: ["service level", "sla", "uptime", "availability", "service credit", "99.9"]
+    prototype: "Provider will use commercially reasonable efforts to make the Service available 99.9% of the time, and service credits are the sole remedy for downtime."
+    market_standard: A stated availability percentage measured monthly, with maintenance windows defined in the contract and service credits that are not the customer's sole and exclusive remedy.
+    sources: [connkavanaugh_sla]
+    red_flags:
+      - id: credits_sole_remedy
+        title: Service credits are the sole remedy
+        pattern: '(service credits?)[^.]{0,80}(sole and exclusive|sole|exclusive) remed'
+        severity: medium
+        risk_for: [customer]
+        explanation: Even prolonged outages give you only small credits, with no right to damages or to terminate.
+        recommendation: Add a termination right for repeated SLA failures, for example 3 months in any 6.
+        sources: [connkavanaugh_sla]
+  - id: warranty
+    label: Warranties & Disclaimers
+    category: legal_exposure
+    importance: medium
+    description: Performance warranties and disclaimers.
+    keywords: ["warrant", "as is", "as available", "disclaim", "merchantability", "fitness for a particular purpose"]
+    prototype: "Provider warrants the Services will perform materially in accordance with the Documentation. Except as stated, the Services are provided as is."
+    red_flags:
+      - id: total_as_is
+        title: Service provided entirely "as is"
+        pattern: 'provided\s+"?as[- ]is"?(?![^.]{0,200}(except|warrants that))'
+        severity: medium
+        risk_for: [customer]
+        explanation: The vendor makes no promise that the product works as described.
+        recommendation: Require a warranty that the service conforms materially to its documentation.
+  - id: ip_ownership
+    label: Intellectual Property
+    category: legal_exposure
+    importance: medium
+    description: Ownership of the platform, deliverables, customer data and feedback.
+    keywords: ["intellectual property", "ownership", "deliverables", "feedback", "license grant", "work product"]
+    prototype: "Customer owns Customer Data. Provider owns the Service. Custom deliverables paid for by Customer are assigned to Customer."
+    market_standard: The customer keeps ownership of its data, and the vendor does not expand its use of that data (for example to train AI) through a quiet or retroactive change of terms, which the US FTC warns may be unfair or deceptive.
+    sources: [us_ftc_ai_terms]
+  - id: governing_law
+    label: Governing Law & Disputes
+    category: legal_exposure
+    importance: medium
+    description: Law, forum and dispute process.
+    keywords: ["governed by", "jurisdiction", "arbitration", "venue", "dispute resolution"]
+    prototype: "This Agreement is governed by the laws of England and disputes shall be resolved in the courts of London."
+    market_standard: A neutral forum; where arbitration is used, the arbitrator must be independent, and in India one party cannot appoint the sole arbitrator (Perkins Eastman 2019; CORE 2024).
+    sources: [in_sc_perkins, in_sc_core]
+hidden_patterns:
+  - id: url_terms
+    title: Binding terms incorporated from a URL that can change
+    pattern: '(available at|located at|posted at|found at|incorporated (herein )?by reference)[^.]{0,80}(https?://|www\.|website|url)'
+    severity: medium
+    risk_for: [customer]
+    explanation: Part of your contract lives on a web page that the vendor can edit at any time.
+    recommendation: Attach the referenced terms as fixed exhibits, or require notice and consent before changes apply.
+    hidden_reason: Terms are incorporated by a web link instead of appearing in the signed contract.
+  - id: audit_rights_vendor
+    title: Vendor can audit your systems or usage
+    pattern: '(provider|vendor|licensor)[^.]{0,40}(may|shall have the right to)[^.]{0,30}audit[^.]{0,120}(customer|your|licensee)'
+    severity: medium
+    risk_for: [customer]
+    explanation: The vendor can inspect your systems and back-bill you for licence overuse.
+    recommendation: Limit audits to once a year with 30 days' notice, at the vendor's cost, with no penalty beyond list-price true-up.
+    hidden_reason: Licence audit rights are often placed in the fees or compliance sections.

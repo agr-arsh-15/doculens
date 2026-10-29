@@ -1,0 +1,26 @@
+# Hand-labeled expectations for tests/fixtures/documents/hr_offer_letter.txt (US offer, read as the candidate).
+# A fairly standard offer: the real problem is the worldwide two-year non-compete. The 24-month non-solicit may be
+# flagged, but it is not required: several US states presume non-solicits of 18-24 months reasonable (Seyfarth
+# 50-state guide), so there is no sourced US non-solicit range. Ordinary terms (90-day probation, 30-day notice,
+# at-will) must not be flagged.
+sample: hr_offer_letter.txt
+doc_type: offer_letter
+jurisdiction: US
+perspective: employee
+score_min: 60
+required:
+  - {id: non_compete, title: "non-compete", min_severity: high}
+acceptable:
+  - {id: non_solicit, title: "non-solicit"}
+  - {id: ip_scope, title: "IP|invention|work made for hire"}
+  - {id: equity_board_approval, title: "board approval|stock|equity"}
+  - {id: at_will, title: "at-will|at will"}
+forbidden:
+  - {id: probation, title: "probation"}
+  - {id: notice, title: "notice period"}
+  - {id: governing_law, title: "governing law"}
+  - {id: missing_compensation, title: "^Missing: Compensation"}
+benchmarks:
+  - {metric: non_compete_months, value: 24, position: above_market}
+  - {metric: probation_months, value: 3, position: market}
+  - {metric: notice_days, value: 30, position: market}

@@ -1,0 +1,168 @@
+id: privacy_policy
+name: Privacy Policy / Notice
+version: "2026.10.29"
+description: Public privacy notices explaining collection, use, sharing, retention and rights over personal data.
+detection:
+  title_keywords: ["privacy policy", "privacy notice", "privacy statement", "cookie policy", "data privacy", "how we use your information"]
+  prototypes:
+    - "This Privacy Policy explains what personal information we collect, how we use it, the legal bases for processing, who we share it with, how long we retain it, international transfers, cookies, and your rights to access, correct and delete your data. Contact our Data Protection Officer."
+perspectives:
+  - id: user
+    label: Data Subject / User
+    description: Your personal data is being collected.
+    aliases: ["you", "user", "your"]
+  - id: provider
+    label: Organisation / Controller
+    description: You publish this notice and must comply with privacy law.
+    aliases: ["we", "us", "company", "controller", "data fiduciary"]
+default_perspective: user
+clauses:
+  - id: data_collected
+    label: Data Collected
+    category: privacy_data
+    importance: critical
+    expected: true
+    missing:
+      severity: high
+      risk_for: [user, provider]
+      explanation: The notice does not list the categories of personal data collected, which GDPR Art. 13 and DPDP s.5 require.
+    description: Categories of personal data collected and their sources.
+    keywords: ["information we collect", "personal data we collect", "we collect", "categories of personal", "device information", "location", "cookies"]
+    prototype: "We collect information you provide such as name and email, device information, location, usage data and cookies."
+    market_standard: The notice lists the specific categories of personal data and why each is needed (GDPR Arts. 13-14; itemised notice under the DPDP Rules 2025; CCPA notice at collection), and collection is limited to what is necessary (GDPR Art. 5).
+    sources: [gdpr_art13_14, gdpr_art5, in_dpdp_rules, us_ccpa]
+    references: [gdpr_art13_14, in_dpdp_act, us_ccpa]
+    red_flags:
+      - id: sensitive_data
+        title: Collects sensitive data (biometrics, precise location, health, financial)
+        pattern: '(biometric|fingerprint|face (scan|recognition)|precise (geo)?location|health (data|information)|financial (information|data)|contacts list|call logs|sms)'
+        severity: medium
+        risk_for: [user]
+        explanation: Sensitive categories of data are collected, which raises the harm if they are leaked or misused.
+        recommendation: Check whether this collection is optional and disable the relevant permissions.
+  - id: purpose_use
+    label: Purposes & Legal Basis
+    category: privacy_data
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [user, provider]
+      explanation: The notice does not state the purposes or the legal basis for processing.
+    description: Why data is used and on what legal basis.
+    keywords: ["how we use", "purposes", "legal basis", "legitimate interest", "consent", "use your information"]
+    prototype: "We use your information to provide the service, for security, and with your consent for marketing. Our legal bases are contract, legitimate interests and consent."
+    market_standard: Specific, explicit purposes rather than open-ended ones (purpose limitation, GDPR Art. 5), and consent that is specific, informed and as easy to withdraw as to give where consent is the basis (GDPR Art. 7; DPDP Act s.6).
+    sources: [gdpr_art5, gdpr_art7, in_dpdp_act]
+    red_flags:
+      - id: open_ended_purpose
+        title: Data can be used for any purpose
+        pattern: '(any (other )?(lawful )?purpose|purposes? (we|that we) (deem|consider) (appropriate|necessary)|including but not limited to[^.]{0,40}purposes)'
+        severity: medium
+        risk_for: [user]
+        explanation: Open-ended purposes let the company reuse your data in ways you never agreed to.
+        recommendation: Purposes should be specific. You can object or withdraw consent for anything beyond the core service.
+  - id: sharing
+    label: Sharing & Sale of Data
+    category: privacy_data
+    importance: critical
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [user]
+      explanation: The notice does not say who receives your data.
+    description: Disclosure to processors, partners and advertisers, and sale of data.
+    keywords: ["share", "third parties", "partners", "advertisers", "sell", "disclose", "affiliates", "service providers"]
+    prototype: "We share data with service providers acting on our behalf. We do not sell your personal information."
+    market_standard: Data is shared with processors only under a contract (GDPR Art. 28), and Californians can opt out of the sale or sharing of their data for cross-context advertising (CCPA).
+    sources: [gdpr_art28, us_ccpa]
+    red_flags:
+      - id: sells_data
+        title: Personal data is sold or shared with advertisers
+        pattern: '\b(sell|rent|trade|monetiz)[^.]{0,80}(personal|your) (data|information)|\b(share|disclose)[^.]{0,80}(advertis|marketing partners|data brokers)'
+        exclude_if: '(do not|never|will not|won.t)\s+(sell|rent|share)'
+        severity: high
+        risk_for: [user]
+        explanation: Your data can flow to advertisers or brokers who build profiles about you.
+        recommendation: Use "Do Not Sell or Share" or other opt-out controls, and limit ad tracking.
+  - id: retention
+    label: Retention
+    category: privacy_data
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [user, provider]
+      explanation: There is no retention period, so data may be kept indefinitely. This conflicts with the storage-limitation principle (GDPR Art. 5(1)(e)).
+    description: How long data is kept.
+    keywords: ["retain", "retention", "keep your", "delete", "as long as necessary", "storage period"]
+    prototype: "We retain personal data only as long as necessary for the purposes described, and delete it within ninety days of account closure."
+    market_standard: Data is kept no longer than needed for its purpose (storage limitation, GDPR Art. 5), and the notice states the retention period or the criteria used to set it (GDPR Art. 13).
+    sources: [gdpr_art5, gdpr_art13_14]
+    red_flags:
+      - id: indefinite_retention
+        title: Data kept indefinitely
+        pattern: '(retain|keep|store)[^.]{0,80}(indefinitely|permanently|forever|as long as we (deem|consider|wish))'
+        severity: high
+        risk_for: [user]
+        explanation: Your data may never be deleted, which increases breach exposure over time.
+        recommendation: Request deletion under your privacy rights when you stop using the service.
+  - id: rights
+    label: Your Rights
+    category: privacy_data
+    importance: critical
+    expected: true
+    missing:
+      severity: high
+      risk_for: [user, provider]
+      explanation: The notice does not explain how to access, correct or delete your data, which is mandatory under GDPR, CCPA and DPDP.
+    description: Access, correction, deletion, portability, objection and grievance rights.
+    keywords: ["your rights", "access", "rectification", "erasure", "delete", "portability", "object", "withdraw consent", "grievance officer", "opt out"]
+    prototype: "You have the right to access, correct, delete and port your data, object to processing, withdraw consent and lodge a complaint with a supervisory authority."
+    market_standard: All statutory rights are listed with how to exercise them free of charge. Responses are due within one month in the EU and UK and within 45 days under the CCPA, and India requires a grievance-redressal contact.
+    sources: [gdpr_art12_22, uk_ico_sar, us_ccpa, in_dpdp_act, in_dpdp_rules]
+    references: [gdpr_art12_22, in_dpdp_act, us_ccpa]
+  - id: transfers
+    label: International Transfers
+    category: privacy_data
+    importance: medium
+    description: Cross-border transfer of data and the safeguards used.
+    keywords: ["international transfer", "transfer outside", "standard contractual clauses", "cross-border", "adequacy"]
+    prototype: "Your data may be transferred outside your country under Standard Contractual Clauses or adequacy decisions."
+    market_standard: The transfer mechanism is named - an adequacy decision (such as the EU-US Data Privacy Framework) or the Standard Contractual Clauses (GDPR Arts. 44-49).
+    sources: [gdpr_art44_49, eu_scc, us_dpf]
+  - id: security
+    label: Security
+    category: privacy_data
+    importance: medium
+    description: Security safeguards and breach notification.
+    keywords: ["security", "encryption", "safeguards", "breach", "unauthorized access"]
+    prototype: "We use encryption and access controls to protect your data and will notify you of a breach as required by law."
+    market_standard: Reasonable security safeguards such as encryption (GDPR Art. 32; DPDP Rules 2025, r.6), and notice to affected users when a breach puts them at risk (GDPR Art. 34; DPDP Rules 2025, r.7).
+    sources: [gdpr_art32_34, in_dpdp_rules]
+  - id: children
+    label: Children's Data
+    category: privacy_data
+    importance: low
+    description: Handling of data relating to minors.
+    keywords: ["children", "under the age", "minors", "parental consent", "under 13", "under 18"]
+    prototype: "We do not knowingly collect data from children under 13 without verifiable parental consent."
+    market_standard: Verifiable parental consent before collecting data from children - under 13 in the US (COPPA) and under 18 in India (DPDP Act s.9).
+    sources: [us_ftc_coppa, in_dpdp_act]
+hidden_patterns:
+  - id: tracking_partners
+    title: Third-party trackers and SDKs collect data directly
+    pattern: '(third[- ]party (cookies|trackers|sdks?|pixels|analytics)|pixel(s)?|web beacons|fingerprint(ing)?)'
+    severity: medium
+    risk_for: [user]
+    explanation: Advertising and analytics companies collect data directly from your device, under their own policies.
+    recommendation: Use cookie settings, ad-tracking opt-outs and browser privacy controls.
+    hidden_reason: Third-party collection is governed by other companies' privacy policies, not this one.
+  - id: policy_change
+    title: Policy can change without direct notice
+    pattern: '(update|change|modify)[^.]{0,60}(this|our) (privacy )?(policy|notice)[^.]{0,120}(any time|without notice|by posting|continued use)'
+    severity: medium
+    risk_for: [user]
+    explanation: How your data is used can change, and the only notice is a quiet update to a web page.
+    recommendation: Material changes should require direct notice and fresh consent.
+    hidden_reason: The change mechanism defaults to a silent page update.

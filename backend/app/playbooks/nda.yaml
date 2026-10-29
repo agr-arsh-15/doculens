@@ -1,0 +1,203 @@
+id: nda
+name: Non-Disclosure Agreement
+version: "2026.10.29"
+description: Mutual or one-way confidentiality agreements protecting information shared for a business purpose.
+detection:
+  title_keywords: ["non-disclosure agreement", "nondisclosure agreement", "confidentiality agreement", "nda", "mutual non-disclosure", "secrecy agreement"]
+  prototypes:
+    - "This Mutual Non-Disclosure Agreement is entered into by the Disclosing Party and the Receiving Party to protect Confidential Information exchanged for the purpose of evaluating a potential business relationship. Exclusions, standard of care, term, return of materials."
+perspectives:
+  - id: receiving
+    label: Receiving Party
+    description: You will receive the other side's confidential information.
+    aliases: ["receiving party", "recipient"]
+  - id: disclosing
+    label: Disclosing Party
+    description: You are sharing your confidential information.
+    aliases: ["disclosing party", "discloser"]
+default_perspective: receiving
+clauses:
+  - id: definition
+    label: Definition of Confidential Information
+    category: legal_exposure
+    importance: high
+    expected: true
+    missing:
+      severity: high
+      risk_for: [receiving, disclosing]
+      explanation: Without a definition, it is unclear what information is protected.
+    description: What counts as confidential information.
+    keywords: ["confidential information means", "confidential information includes", "definition", "marked as confidential", "proprietary"]
+    prototype: "Confidential Information means all non-public business, technical and financial information disclosed by the Disclosing Party that is marked confidential or would reasonably be understood to be confidential."
+    market_standard: A focused definition - information that is marked, or that a reasonable person would understand to be confidential from its nature or the circumstances of disclosure. Overly broad definitions can be refused enforcement.
+    sources: [moritthock_nda, aba_nda]
+    red_flags:
+      - id: overbroad_definition
+        title: Everything shared counts as confidential
+        pattern: '(any and all|all) information[^.]{0,120}(whether or not|regardless of whether)[^.]{0,40}(marked|designated|identified)'
+        severity: medium
+        risk_for: [receiving]
+        explanation: Even trivial or public information becomes confidential, which makes accidental breach far more likely.
+        recommendation: Limit the definition to information that is marked, or reasonably understood to be, confidential.
+  - id: exclusions
+    label: Standard Exclusions
+    category: legal_exposure
+    importance: critical
+    expected: true
+    missing:
+      severity: high
+      risk_for: [receiving]
+      explanation: There are no carve-outs for public, already-known or independently developed information. You could be liable for using knowledge you already had.
+    description: Carve-outs for public, already-known, independently developed or third-party information.
+    keywords: ["does not include", "shall not include", "exclusions", "publicly available", "independently developed", "already known", "rightfully received"]
+    prototype: "Confidential Information does not include information that is publicly available, already known to the Receiving Party, independently developed, or rightfully received from a third party."
+    market_standard: The commonly accepted carve-outs - information that is public, already known to the recipient, received from a third party without restriction, or independently developed - plus disclosure compelled by law with prompt notice to the disclosing party.
+    sources: [moritthock_nda]
+    red_flags:
+      - id: no_compelled_disclosure
+        title: No carve-out for disclosures required by law
+        pattern: '(does not|shall not|will not) include|exclusions?\b'
+        exclude_if: 'required by (law|regulation|court)|court order|subpoena|compelled|legal process|governmental (authority|order)|regulatory (authority|request)'
+        exclude_scope: document
+        severity: medium
+        risk_for: [receiving]
+        explanation: If a court, regulator or law-enforcement body orders you to hand over the information, complying would still technically breach this agreement.
+        recommendation: Add a carve-out for disclosures required by law or court order, conditioned on prompt notice to the disclosing party where legally permitted.
+        redline: "The Receiving Party may disclose Confidential Information to the extent required by law, regulation or court order, provided it gives the Disclosing Party prompt prior notice where legally permitted and discloses only what is required."
+  - id: obligations
+    label: Use & Standard of Care
+    category: legal_exposure
+    importance: high
+    description: Permitted use and the level of care required.
+    keywords: ["standard of care", "reasonable care", "use solely", "purpose", "need to know", "protect"]
+    prototype: "The Receiving Party shall use Confidential Information solely for the Purpose and protect it using at least reasonable care, disclosing it only to employees with a need to know."
+    market_standard: Use limited to the stated purpose, and disclosure allowed to employees and professional advisers (lawyers, accountants, financial advisers) who need to know and are themselves bound to confidentiality.
+    sources: [moritthock_nda]
+    red_flags:
+      - id: strict_liability_care
+        title: Absolute or strict-liability standard of care
+        pattern: '(highest|utmost|absolute) (degree of |standard of )?care|(guarantee|ensure) that no[^.]{0,60}(disclos|breach)'
+        severity: medium
+        risk_for: [receiving]
+        explanation: You are liable for any leak, even when you took every reasonable precaution.
+        recommendation: Replace with a "reasonable care" standard.
+  - id: term
+    label: Term & Survival
+    category: legal_exposure
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [receiving]
+      explanation: No term is stated, so the confidentiality obligations may last forever.
+    description: How long the agreement and the confidentiality obligations last.
+    keywords: ["term", "remain in effect", "survive", "years from", "expiration", "perpetual"]
+    prototype: "This Agreement remains in effect for two years and confidentiality obligations survive for three years after termination, except trade secrets which are protected while they remain trade secrets."
+    market_standard: Ordinary business information is protected for 2-5 years; trade secrets are protected for as long as they remain secret, and the NDA should say expressly that those obligations survive.
+    sources: [moritthock_nda, aba_nda]
+    metrics:
+      - id: confidentiality_years
+        label: Confidentiality duration
+        unit: years
+        extractor: duration
+        context: ["confidential", "surviv", "remain in effect", "term"]
+        prefer_context: ["surviv"]
+        range: {min: 2, max: 5, typical: 3, sources: [moritthock_nda]}
+        scale_max: 10
+        worse_when: higher
+        risk_for: [receiving]
+        severity_outside: medium
+    red_flags:
+      - id: perpetual_obligation
+        title: Confidentiality obligations never expire
+        pattern: '(perpetu|indefinite|in perpetuity|forever|no (fixed )?expir)'
+        severity: medium
+        risk_for: [receiving]
+        explanation: You remain bound forever, even for ordinary business information.
+        recommendation: Limit obligations to 3-5 years, with an exception for genuine trade secrets.
+  - id: indemnification
+    label: Indemnification
+    category: financial
+    importance: high
+    description: Obligation to reimburse the other party's losses.
+    keywords: ["indemnify", "indemnification", "hold harmless", "defend"]
+    prototype: "The Receiving Party agrees to defend, indemnify and hold harmless the Disclosing Party from all losses arising from any breach."
+    market_standard: Remedies for breach usually include an injunction and indemnification for losses caused by the breach. An indemnity should cover only losses that the recipient's own breach causes.
+    sources: [moritthock_nda]
+    red_flags:
+      - id: one_way_indemnity
+        title: One-sided, uncapped indemnity
+        pattern: '(indemnif|hold harmless)'
+        exclude_if: '(each party|mutual|either party|both parties)[^.]{0,40}(indemnif|hold harmless)'
+        severity: high
+        risk_for: [receiving]
+        explanation: You must cover all of the other side's losses, legal fees and third-party claims, with no cap. This is unusual for an NDA.
+        recommendation: Delete the indemnity, or make it mutual and capped and limited to direct losses from proven breach.
+        redline: "Each party shall be liable for direct damages arising from its breach of this Agreement. Neither party shall be liable for indirect or consequential losses."
+  - id: return_destruction
+    label: Return or Destruction of Materials
+    category: legal_exposure
+    importance: low
+    description: What happens to the information at the end of the relationship.
+    keywords: ["return or destroy", "return all", "destroy all", "certify destruction"]
+    prototype: "Upon request the Receiving Party shall promptly return or destroy all Confidential Information and certify destruction in writing."
+    market_standard: Return or destroy (and certify destruction) at the disclosing party's request, with carve-outs for automated archives and a copy kept by counsel for legal purposes.
+    sources: [moritthock_nda, aba_nda]
+  - id: remedies
+    label: Remedies
+    category: legal_exposure
+    importance: medium
+    description: Injunctive relief and damages.
+    keywords: ["injunctive relief", "equitable relief", "irreparable harm", "specific performance", "liquidated damages"]
+    prototype: "The parties agree that a breach may cause irreparable harm and the Disclosing Party is entitled to seek injunctive relief."
+    market_standard: The disclosing party may seek an injunction to stop further breaches. A pre-set penalty amount is recoverable in India only as reasonable compensation up to that amount (s.74).
+    sources: [moritthock_nda, in_contract_act_s74]
+    red_flags:
+      - id: liquidated_damages
+        title: Pre-set penalty for any breach
+        pattern: 'liquidated damages|penalty of|pay (a sum of|an amount of)'
+        severity: high
+        risk_for: [receiving]
+        explanation: You owe a fixed penalty for any breach, no matter how minor or harmless.
+        recommendation: Remove the fixed penalty and rely on actual damages and injunctive relief.
+  - id: non_solicit
+    label: Non-Solicit / Non-Compete Rider
+    category: career_mobility
+    importance: medium
+    description: Restrictive covenants added to an NDA.
+    keywords: ["non-solicit", "solicit", "non-compete", "not compete", "hire any employee"]
+    prototype: "During the term and for twelve months thereafter neither party shall solicit or hire employees of the other party."
+    market_standard: If present, limited to people the recipient actually dealt with and to a reasonable period; courts test such restrictions for reasonableness, and they generally run 3-12 months in the UK.
+    sources: [littler_uk_covenants, khaitan_covenants]
+    red_flags:
+      - id: nda_non_compete
+        title: Non-compete restriction inside an NDA
+        pattern: '(shall not|will not|agrees not to)[^.]{0,100}(compet|develop (any )?(similar|competing))'
+        severity: high
+        risk_for: [receiving]
+        explanation: A confidentiality agreement should not stop you from building or selling competing products.
+        recommendation: Remove the clause, and add a "residuals" or independent-development carve-out instead.
+        hidden_reason: Non-compete terms are unexpected in an NDA and easy to miss.
+  - id: governing_law
+    label: Governing Law & Jurisdiction
+    category: legal_exposure
+    importance: medium
+    expected: true
+    missing:
+      severity: low
+      risk_for: [receiving, disclosing]
+      explanation: There is no governing law or forum, which leaves room for disputes about where any case is heard.
+    description: Governing law and courts.
+    keywords: ["governed by", "laws of", "jurisdiction", "venue", "courts of"]
+    prototype: "This Agreement shall be governed by the laws of the State of Delaware and the parties submit to the exclusive jurisdiction of its courts."
+    market_standard: A governing law and forum that are practical and accessible for both parties; a foreign law or forum can change how the NDA is read and may limit discovery or injunctions.
+    sources: [aba_nda]
+hidden_patterns:
+  - id: residual_rights_waiver
+    title: Implied licence or ownership transfer of shared information
+    pattern: '(grant|transfer|assign)[^.]{0,80}(license|licence|right|title|ownership)[^.]{0,80}(feedback|suggestions|ideas|information disclosed)'
+    severity: medium
+    risk_for: [disclosing]
+    explanation: Feedback or ideas you share may become the other party's property.
+    recommendation: State that no licence or ownership transfers under the NDA.
+    hidden_reason: IP transfer language placed inside a confidentiality agreement.

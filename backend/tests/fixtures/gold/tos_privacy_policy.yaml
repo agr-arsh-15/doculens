@@ -1,0 +1,18 @@
+# Hand-labeled expectations for tests/fixtures/documents/tos_privacy_policy.txt, read as the user.
+sample: tos_privacy_policy.txt
+doc_type: tos
+perspective: user
+score_max: 60
+required:
+  - {id: tracking_consent, title: "tracking|your data", min_severity: medium}
+  - {id: unilateral_change, title: "terms can change", min_severity: high}
+  - {id: forced_arbitration, title: "arbitration", min_severity: high}
+  - {id: token_liability, title: "liability", min_severity: medium}
+  - {id: account_termination, title: "terminated", min_severity: medium}
+acceptable:
+  - {id: arbitration_opt_out, title: "opt-out"}
+  - {id: as_is, title: "as is"}
+  - {id: missing_governing_law, title: "governing law"}
+forbidden:
+  - {id: missing_data_privacy, title: "^Missing: Data Collection"}
+  - {id: missing_modification, title: "^Missing: Changes to Terms"}

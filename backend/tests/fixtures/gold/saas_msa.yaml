@@ -1,0 +1,31 @@
+# Hand-labeled expectations for tests/fixtures/documents/saas_msa.txt, read as the customer.
+# The uptime and non-renewal-window benchmarks were removed with playbook 2026.10.29: no trusted source
+# supports a numeric market range for them (see docs/sources_changelog.md).
+sample: saas_msa.txt
+doc_type: msa_saas
+jurisdiction: US
+perspective: customer
+score_max: 45
+required:
+  - {id: vendor_convenience_termination, title: "terminate for convenience", min_severity: medium}
+  - {id: data_use_training, title: "use your data|train", min_severity: high}
+  - {id: breach_notice_window, title: "breach notification", min_severity: medium}
+  - {id: customer_indemnity, title: "indemnit", min_severity: medium}
+  - {id: liability_cap, title: "liability cap", min_severity: medium}
+  - {id: auto_renewal, title: "renews automatically", kind: hidden}
+  - {id: price_increase, title: "raise prices|price increase", min_severity: medium}
+  - {id: sole_remedy, title: "sole remedy|service credits", min_severity: low}
+  - {id: as_is, title: "as is", min_severity: low}
+  - {id: url_terms, title: "URL|web link", kind: hidden}
+  - {id: missing_exhibit, title: "Exhibit B", kind: hidden}
+  - {id: vendor_audit, title: "audit", min_severity: low}
+acceptable:
+  - {id: payment_terms, title: "payment terms"}
+  - {id: non_renewal_notice, title: "non-renewal"}
+  - {id: governing_law, title: "governing law|venue"}
+forbidden:
+  - {id: generic_url_dup, title: "^Binding terms live at a web link"}
+benchmarks:
+  - {metric: liability_cap_months, value: 3, position: below_market}
+  - {metric: breach_notice_hours, value: 168, position: above_market}
+  - {metric: payment_days, value: 15, position: below_market}

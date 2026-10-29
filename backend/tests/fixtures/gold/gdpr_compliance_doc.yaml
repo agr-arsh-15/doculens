@@ -1,0 +1,19 @@
+# Hand-labeled expectations for tests/fixtures/documents/gdpr_compliance_doc.txt, read as the controller.
+# A strong internal policy: encryption, 72-hour breach notice, erasure in 30 days, annual SOC 2 audit.
+# It says nothing about sub-processors, which a DPA reviewer would raise.
+sample: gdpr_compliance_doc.txt
+doc_type: dpa_compliance
+jurisdiction: EU
+perspective: controller
+score_min: 75
+required:
+  - {id: missing_sub_processors, title: "sub-processor", kind: missing}
+acceptable:
+  - {id: missing_processing_instructions, title: "processing instructions", kind: missing}
+  - {id: missing_transfers, title: "transfer", kind: missing}
+forbidden:
+  - {id: missing_security, title: "^Missing: Security"}
+  - {id: missing_breach, title: "^Missing: Breach"}
+  - {id: missing_audit, title: "^Missing: Audit"}
+  - {id: missing_retention, title: "^Missing: Retention"}
+  - {id: breach_window, title: "breach notification.*outside"}

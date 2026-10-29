@@ -1,0 +1,22 @@
+# Hand-labeled expectations for tests/fixtures/documents/legal_nda_contract.txt, read as the receiving party.
+# A balanced mutual NDA. Issues: an uncapped indemnity (unusual in an NDA) and no carve-out
+# for disclosures compelled by law. Its standard clauses are all present and must not be "missing".
+sample: legal_nda_contract.txt
+doc_type: nda
+jurisdiction: US
+perspective: receiving
+score_min: 65
+required:
+  - {id: uncapped_indemnity, title: "indemnit", min_severity: medium}
+  - {id: compelled_disclosure, title: "required by law", min_severity: low}
+acceptable:
+  - {id: marking_requirement, title: "marked|definition"}
+  - {id: return_destruction, title: "return|destruction"}
+forbidden:
+  - {id: missing_exclusions, title: "^Missing: Standard Exclusions"}
+  - {id: missing_term, title: "^Missing: Term"}
+  - {id: missing_governing_law, title: "^Missing: Governing"}
+  - {id: missing_definition, title: "^Missing: Definition"}
+  - {id: perpetual, title: "never expire"}
+benchmarks:
+  - {metric: confidentiality_years, value: 5, position: market}

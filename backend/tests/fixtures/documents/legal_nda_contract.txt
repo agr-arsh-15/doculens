@@ -1,0 +1,29 @@
+MUTUAL NON-DISCLOSURE AND CONFIDENTIALITY AGREEMENT
+
+This Mutual Non-Disclosure Agreement (the "Agreement") is entered into as of January 12, 2024 (the "Effective Date"), by and between Nexus Cyber Systems LLC, a Delaware limited liability company ("Nexus"), and Quantum Analytics Corp., a California corporation ("Quantum"). Each may be referred to individually as a "Party" and collectively as the "Parties".
+
+1. Purpose:
+The Parties wish to explore potential business collaboration and joint commercial integration involving natural language processing pipelines (the "Purpose").
+
+2. Confidential Information:
+"Confidential Information" means all non-public technical data, source code, algorithm architecture, customer lists, financial plans, and trade secrets disclosed by one Party (the "Disclosing Party") to the other (the "Receiving Party"), whether orally or in tangible form, marked as proprietary or confidential.
+
+3. Non-Disclosure and Standard of Care:
+The Receiving Party shall protect the Confidential Information using the same degree of care, but no less than a reasonable degree of care, that it uses to protect its own sensitive trade secrets. The Receiving Party shall not disclose Confidential Information to any third party without prior written consent, except to employees who have a strict need to know.
+
+4. Exclusions:
+Confidential Information does not include information that: (a) is or becomes publicly known through no breach of this Agreement; (b) was already in Receiving Party's rightful possession prior to disclosure; (c) is independently developed without reference to Disclosing Party's information.
+
+5. Indemnification:
+Receiving Party agrees to defend, indemnify, and hold harmless Disclosing Party, its directors, officers, and affiliates from and against any and all claims, liabilities, losses, damages, and reasonable attorney fees arising out of any unauthorized disclosure or material breach of this Agreement.
+
+6. Term and Termination:
+This Agreement shall remain in effect for a term of three (3) years from the Effective Date. Either Party may terminate discussions upon thirty (30) days written notice. Confidentiality obligations shall survive termination for five (5) years.
+
+7. Governing Law and Jurisdiction:
+This Agreement shall be governed by the laws of the State of Delaware. Any dispute arising hereunder shall be submitted to the exclusive jurisdiction of the state and federal courts located in Wilmington, Delaware.
+
+IN WITNESS WHEREOF, the Parties have executed this Agreement as of the Effective Date.
+
+Nexus Cyber Systems LLC: legal@nexuscybersys.com
+Quantum Analytics Corp.: contracts@quantumanalytics.io

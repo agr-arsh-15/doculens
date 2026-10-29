@@ -1,0 +1,37 @@
+MASTER SUBSCRIPTION AGREEMENT
+
+This Master Subscription Agreement (the "Agreement") is entered into between Stratus Cloud Inc., a Delaware corporation ("Provider"), and the customer identified in the Order Form ("Customer").
+
+1. Services and Subscription
+1.1 Provider will make the Services available to Customer during the Subscription Term in accordance with the Documentation and the Order Form.
+1.2 Customer shall comply with the Acceptable Use Policy available at https://stratus.example.com/aup, as updated by Provider from time to time.
+
+2. Fees and Payment
+2.1 Customer shall pay all fees within fifteen (15) days of the invoice date. Late payments accrue interest at 1.5% per month.
+2.2 Provider may increase the fees at any time upon notice to Customer.
+
+3. Term and Renewal
+3.1 The initial Subscription Term is twelve (12) months. The Agreement shall automatically renew for successive twelve (12) month terms unless either party gives notice of non-renewal at least ninety (90) days before the end of the then-current term.
+3.2 Provider may terminate this Agreement for convenience at any time on thirty (30) days notice.
+
+4. Service Levels
+Provider will use commercially reasonable efforts to make the Services available 99.5% of the time. Service credits as described in the SLA are Customer's sole and exclusive remedy for any unavailability.
+
+5. Customer Data
+5.1 Customer owns all Customer Data. Provider shall implement reasonable security measures to protect Customer Data.
+5.2 Provider may use Customer Data and usage data to improve the Services and to train its machine learning models.
+5.3 Provider will notify Customer of a security incident affecting Customer Data within seven (7) days.
+
+6. Warranties
+THE SERVICES ARE PROVIDED "AS IS" AND PROVIDER DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED.
+
+7. Indemnification
+Customer shall defend, indemnify and hold harmless Provider from any and all claims, losses and expenses arising out of or relating to Customer's use of the Services.
+
+8. Limitation of Liability
+IN NO EVENT SHALL PROVIDER'S AGGREGATE LIABILITY EXCEED THE FEES PAID BY CUSTOMER IN THE THREE (3) MONTHS PRECEDING THE CLAIM. PROVIDER SHALL NOT BE LIABLE FOR ANY INDIRECT OR CONSEQUENTIAL DAMAGES.
+
+9. General
+9.1 Provider may audit Customer's use of the Services upon notice to verify compliance with this Agreement.
+9.2 This Agreement is governed by the laws of the State of California and the courts of San Francisco County shall have exclusive jurisdiction.
+9.3 The Data Processing Addendum in Exhibit B is incorporated herein by reference.

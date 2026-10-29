@@ -1,0 +1,159 @@
+id: generic_contract
+name: General Contract
+version: "2026.10.29"
+description: Fallback playbook for agreements that do not match a specialised type (leases, loans, partnership and service contracts).
+detection:
+  title_keywords: ["agreement", "contract", "lease", "loan agreement", "deed", "memorandum of understanding"]
+  prototypes:
+    - "This Agreement is made between the parties. The parties agree to the following terms: obligations, payment, term, termination, liability, indemnity, governing law and dispute resolution."
+perspectives:
+  - id: first_party
+    label: Party receiving the contract
+    description: You were handed this contract to sign.
+    aliases: ["you", "your"]
+  - id: drafting_party
+    label: Drafting party
+    description: You wrote or issued this contract.
+    aliases: ["we", "us", "company"]
+default_perspective: first_party
+clauses:
+  - id: payment
+    label: Payment Obligations
+    category: financial
+    importance: high
+    description: Amounts payable, due dates, interest and penalties.
+    keywords: ["payment", "fee", "rent", "interest", "installment", "due date", "late fee", "penalty"]
+    prototype: "The payer shall pay the amount within thirty days of invoice, failing which interest accrues at the stated rate."
+    market_standard: Clear amounts and due dates. EU law sets a 30-day default for business payments and generally caps agreed terms at 60 days, with statutory late interest of the reference rate plus 8 points a year; the UK uses 8% above base rate; India requires payment to registered micro and small suppliers within 45 days.
+    sources: [eu_late_payment, uk_late_payment, in_msmed_s15]
+    red_flags:
+      - id: penal_interest
+        title: High or compounding penalty interest
+        pattern: '(penal|default|late)[^.]{0,40}(interest|charges?)[^.]{0,80}(\b(2[4-9]|[3-9]\d)\s?%|compound)'
+        severity: high
+        risk_for: [first_party]
+        explanation: Penalty interest at this level can quickly multiply the amount you owe.
+        recommendation: Negotiate simple interest at a market rate, charged only after written notice.
+  - id: liability
+    label: Limitation of Liability
+    category: financial
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [first_party, drafting_party]
+      explanation: There is no limit on liability, so exposure for losses is uncapped for both sides.
+    description: Caps and exclusions of damages.
+    keywords: ["limitation of liability", "aggregate liability", "in no event", "consequential", "indirect damages"]
+    prototype: "Neither party's aggregate liability shall exceed the total amounts paid under this agreement, excluding indirect damages."
+    market_standard: A cap tied to the fees under the contract (in technology contracts most often 12 months' fees or 100% of fees). Liability for death or personal injury caused by negligence cannot be excluded in the UK.
+    sources: [nrf_liability_benchmark, uk_ucta_s2]
+    red_flags:
+      - id: one_sided_cap
+        title: Only one party's liability is limited
+        pattern: '(liability)[^.]{0,120}(shall not|will not|not) exceed'
+        exclude_if: '(each party|either party|neither party|both parties)'
+        severity: medium
+        risk_for: [first_party]
+        explanation: The cap may protect only the drafting party.
+        recommendation: Make the cap mutual.
+  - id: indemnity
+    label: Indemnity
+    category: financial
+    importance: high
+    description: Obligations to compensate for losses or third-party claims.
+    keywords: ["indemnify", "indemnity", "hold harmless", "defend"]
+    prototype: "Each party shall indemnify the other against third-party claims arising from its breach or negligence."
+    market_standard: Limited to losses caused by the indemnifying party's own breach, negligence or the third-party claims it causes. The contract should say whether indemnities sit inside or outside the liability cap; most technology contracts leave at least some indemnities uncapped.
+    sources: [nrf_liability_benchmark]
+    red_flags:
+      - id: one_way_indemnity
+        title: One-sided indemnity
+        pattern: '(indemnif|hold harmless)'
+        exclude_if: '(each party|mutual|either party|both parties)'
+        severity: high
+        risk_for: [first_party]
+        explanation: You may have to cover the other party's losses regardless of who caused them.
+        recommendation: Make the indemnity mutual and limited to losses caused by your own breach or negligence.
+  - id: termination
+    label: Termination
+    category: termination_exit
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [first_party, drafting_party]
+      explanation: There is no termination clause, so it is unclear how either side can exit the contract.
+    description: How the contract ends, notice and cure periods.
+    keywords: ["terminate", "termination", "material breach", "cure", "notice of termination", "expiry"]
+    prototype: "Either party may terminate on thirty days written notice for material breach that is not cured."
+    market_standard: Termination for material breach only after written notice and a reasonable opportunity to cure.
+    sources: [faegre_material_breach]
+    red_flags:
+      - id: unilateral_termination
+        title: One party can terminate immediately at will
+        pattern: 'terminat[^.]{0,80}(immediately|forthwith|at any time|without (any )?(prior )?notice|for any reason|sole discretion)'
+        exclude_if: '(either party|each party)'
+        severity: medium
+        risk_for: [first_party]
+        explanation: The other side can end the contract suddenly, with no cure opportunity.
+        recommendation: Require notice and a cure period, and make termination rights mutual.
+  - id: term_renewal
+    label: Term & Renewal
+    category: termination_exit
+    importance: medium
+    description: Duration, lock-in and renewal.
+    keywords: ["term of", "lock-in", "renew", "renewal", "duration", "commencement"]
+    prototype: "The term is twelve months from the commencement date, renewable by mutual agreement."
+    market_standard: A defined term, with automatic renewal only alongside a clear opt-out. New York requires a written reminder before the opt-out deadline for service contracts, and California requires clear disclosure, consent and easy online cancellation for consumer subscriptions.
+    sources: [us_ny_gol_5903, us_ca_arl]
+  - id: dispute
+    label: Governing Law & Disputes
+    category: legal_exposure
+    importance: medium
+    expected: true
+    missing:
+      severity: low
+      risk_for: [first_party, drafting_party]
+      explanation: There is no governing law or dispute mechanism.
+    description: Governing law, courts or arbitration.
+    keywords: ["governed by", "jurisdiction", "arbitration", "courts of", "dispute"]
+    prototype: "This agreement is governed by the laws of India and disputes shall be resolved by arbitration seated at New Delhi."
+    market_standard: A neutral forum and an independent arbitrator. In India, one party cannot unilaterally appoint the sole arbitrator (Perkins Eastman 2019; CORE 2024).
+    sources: [in_sc_perkins, in_sc_core, in_arbitration_act]
+    red_flags:
+      - id: unilateral_arbitrator
+        title: One party appoints the sole arbitrator
+        pattern: 'arbitrat[^.]{0,120}(appointed|nominated|chosen) (solely )?by the (company|lender|landlord|lessor|owner|first party)'
+        severity: high
+        risk_for: [first_party]
+        explanation: The other party chooses the person who decides any dispute.
+        recommendation: Require a jointly appointed or institutional arbitrator.
+        sources: [in_sc_perkins, in_sc_core]
+  - id: confidentiality
+    label: Confidentiality
+    category: legal_exposure
+    importance: low
+    description: Protection of shared information.
+    keywords: ["confidential", "non-disclosure", "proprietary"]
+    prototype: "Each party shall keep the other party's confidential information secret."
+    market_standard: Mutual, with the commonly accepted carve-outs - information that is public, already known, received from a third party without restriction, or independently developed.
+    sources: [moritthock_nda]
+hidden_patterns:
+  - id: auto_renewal
+    title: Contract renews automatically
+    pattern: '(automatically|auto[- ]?)\s?renew|deemed (to be )?renewed'
+    severity: medium
+    risk_for: [first_party]
+    explanation: The contract renews unless you act within a window that is easy to miss.
+    recommendation: Diarise the non-renewal deadline, or require an advance reminder.
+    sources: [us_ny_gol_5903]
+    hidden_reason: Renewal mechanics are usually tucked into the term clause.
+  - id: external_docs
+    title: Terms incorporated from external documents
+    pattern: '(as amended from time to time|incorporated (herein )?by reference|available at https?://)'
+    severity: medium
+    risk_for: [first_party]
+    explanation: Obligations can change through documents that are not attached.
+    recommendation: Ask for all referenced documents to be attached and frozen.
+    hidden_reason: Binding terms live outside the signed document.

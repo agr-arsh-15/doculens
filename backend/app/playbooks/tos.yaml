@@ -1,0 +1,237 @@
+id: tos
+name: Terms of Service / Terms & Conditions
+version: "2026.10.29"
+description: Consumer or user-facing terms of service, terms and conditions, and EULAs for websites, apps and online services.
+detection:
+  title_keywords: ["terms of service", "terms of use", "terms and conditions", "user agreement", "end user license agreement", "eula", "terms & conditions", "acceptable use"]
+  prototypes:
+    - "By accessing or using our website, app or service you agree to be bound by these Terms of Service. Your account, user content, acceptable use, subscriptions and billing, disclaimers, limitation of liability, arbitration, changes to these terms."
+perspectives:
+  - id: user
+    label: User / Consumer
+    description: You use the service and are accepting these terms.
+    aliases: ["you", "user", "your", "customer", "member"]
+  - id: provider
+    label: Service Provider
+    description: You operate the service and wrote these terms.
+    aliases: ["we", "us", "our", "company", "provider"]
+default_perspective: user
+clauses:
+  - id: modification
+    label: Changes to Terms
+    category: legal_exposure
+    importance: high
+    expected: true
+    missing:
+      severity: low
+      risk_for: [user]
+      explanation: The terms do not say how changes will be communicated.
+    description: How and when the provider can change the terms.
+    keywords: ["modify these terms", "change these terms", "update these terms", "reserve the right to modify", "continued use", "revised terms"]
+    prototype: "We may modify these Terms at any time. We will notify you of material changes at least thirty days in advance, and your continued use after the changes constitutes acceptance."
+    market_standard: Changes only for valid reasons stated in the terms, with adequate advance notice and a right to leave without loss (UK CMA guidance; EU unfair terms law). Business users of online platforms must get at least 15 days' notice (EU P2B Regulation), and in the US a quiet change that expands data use may be unfair or deceptive (FTC).
+    sources: [uk_cma37, eu_unfair_terms, eu_p2b, us_ftc_ai_terms]
+    red_flags:
+      - id: unilateral_change
+        title: Terms can change at any time without notice
+        pattern: '(modify|change|amend|update|revise)[^.]{0,80}(these terms|this agreement|the terms)[^.]{0,120}(any time|without (prior )?notice|sole discretion)|continued use[^.]{0,80}(constitute|deemed|means)[^.]{0,30}accept'
+        exclude_if: '(\d+|thirty|fifteen|sixty)\s*(\(\d+\)\s*)?days.{0,40}(prior|advance|before)'
+        severity: high
+        risk_for: [user]
+        explanation: The provider can rewrite the deal, including fees and data use, and you are bound simply by continuing to use the service.
+        recommendation: Expect advance notice of material changes (for example 30 days), with an option to cancel and receive a refund.
+        sources: [uk_cma37, eu_p2b]
+        redline: "We will give at least 30 days' notice of material changes by email. If you do not agree, you may cancel and receive a pro-rata refund."
+  - id: arbitration
+    label: Arbitration & Class Action Waiver
+    category: legal_exposure
+    importance: high
+    description: Forced arbitration, jury waiver and class action waiver.
+    keywords: ["binding arbitration", "arbitration", "class action", "jury trial", "waive", "small claims", "opt out"]
+    prototype: "Any dispute shall be resolved by binding individual arbitration and you waive any right to a jury trial or to participate in a class action."
+    market_standard: Where consumer arbitration is used, the consumer's filing fee is capped, the business pays the arbitrator, and small-claims court stays available (AAA Consumer Rules). In India an arbitration clause cannot stop a consumer from going to the consumer commission (Emaar MGF, 2018).
+    sources: [aaa_consumer, in_sc_emaar, in_cpa_2019]
+    references: [in_cpa_2019, in_sc_emaar]
+    red_flags:
+      - id: forced_arbitration
+        title: Mandatory arbitration and class action waiver
+        pattern: '(binding|mandatory|final) (individual )?arbitration|class action waiver|waive[^.]{0,60}(jury|class action|class-wide)'
+        severity: high
+        risk_for: [user]
+        explanation: You give up the right to go to court or join other users in a class action. Arbitration is private and often favors repeat corporate players.
+        recommendation: Look for an opt-out window and use it if you want to keep your court rights; small claims and (in India) consumer commissions usually remain open to you.
+        sources: [aaa_consumer, in_sc_emaar, eu_unfair_terms]
+        jurisdiction_notes:
+          IN: Consumers in India can still approach consumer commissions despite an arbitration clause.
+          EU: Pre-dispute arbitration clauses in consumer contracts are generally unfair under the Unfair Contract Terms Directive.
+        severity_by_jurisdiction:
+          EU: medium
+          IN: medium
+      - id: no_opt_out
+        title: No opt-out from arbitration
+        pattern: 'arbitrat'
+        exclude_if: 'opt[- ]?out'
+        severity: medium
+        risk_for: [user]
+        explanation: There is no way to decline the arbitration agreement.
+        recommendation: Ask for a 30-day opt-out from arbitration by email.
+  - id: liability
+    label: Limitation of Liability
+    category: financial
+    importance: high
+    description: How much the provider owes you if something goes wrong.
+    keywords: ["limitation of liability", "in no event", "aggregate liability", "shall not exceed", "consequential"]
+    prototype: "In no event shall our aggregate liability exceed the greater of one hundred dollars or the amounts you paid in the past twelve months."
+    market_standard: Liability for death or personal injury caused by negligence, and statutory consumer rights, cannot be excluded (UK Consumer Rights Act 2015 ss.31 and 65), and a cap that leaves consumers without a real remedy is likely unfair (CMA guidance; EU unfair terms law).
+    sources: [uk_cra_s65, uk_cra_s31, uk_cma37, eu_unfair_terms]
+    red_flags:
+      - id: nominal_cap
+        title: Provider liability is capped at a token amount
+        pattern: '(not exceed|limited to|greater of|lesser of)[^.]{0,80}(\$|usd|inr|rs\.?|₹|€|£)\s?\d{1,3}(\.\d+)?\b(?![\d,])|(not exceed|limited to)[^.]{0,40}(zero|nothing)'
+        severity: high
+        risk_for: [user]
+        explanation: Even if the provider loses your data or money, the most you can recover is a token amount.
+        recommendation: Expect a cap of at least the fees paid in the last 12 months, with no limit for gross negligence or data breaches.
+  - id: warranty
+    label: Disclaimers ("As Is")
+    category: legal_exposure
+    importance: medium
+    description: Disclaimer of warranties about the service.
+    keywords: ["as is", "as available", "disclaim", "without warranty", "merchantability", "fitness for a particular purpose"]
+    prototype: "The service is provided as is and as available without warranties of any kind."
+    market_standard: Common in consumer terms, but statutory consumer rights cannot be excluded in the UK (Consumer Rights Act 2015 s.31) or the EU, and Indian consumers can still complain of deficient service under the Consumer Protection Act, 2019.
+    sources: [uk_cra_s31, eu_unfair_terms, in_cpa_2019]
+  - id: data_privacy
+    label: Data Collection & Use
+    category: privacy_data
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [user]
+      explanation: The terms do not explain what data is collected or link to a privacy policy.
+    description: What data is collected and how it is used and shared.
+    keywords: ["personal data", "personal information", "collect", "cookies", "privacy policy", "tracking", "share with third parties", "analytics"]
+    prototype: "We collect personal information, device data and usage analytics as described in our Privacy Policy and may share it with service providers."
+    market_standard: A linked privacy policy, opt-in consent for non-essential cookies and tracking in the EU (ePrivacy Directive; GDPR Art. 7), and a right to opt out of the sale or sharing of data for advertising in California (CCPA).
+    sources: [eu_eprivacy, gdpr_art7, us_ccpa]
+    red_flags:
+      - id: data_sale
+        title: Your data may be sold or shared for advertising
+        pattern: '(sell|rent|trade|monetiz|share)[^.]{0,80}(personal (data|information)|your (data|information))[^.]{0,120}(third part|partners|advertis|marketing)'
+        exclude_if: '(do not|never|will not|won.t)\s+(sell|rent|trade)'
+        severity: high
+        risk_for: [user]
+        explanation: Your personal information can be passed to advertisers or data brokers.
+        recommendation: Opt out of sale or sharing where the law allows (for example, CCPA "Do Not Sell or Share"), or choose a different provider.
+      - id: tracking_consent_by_use
+        title: Activity tracking for ads, with consent assumed from use
+        pattern: '(track|fingerprint|pixel)[^.]{0,160}(targeted|advertis)|(by using|by accessing|continued use)[^.]{0,80}(consent|agree)[^.]{0,60}(track|cookie|collect)'
+        severity: high
+        risk_for: [user]
+        explanation: Your activity is monitored (including cookies, pixels or device fingerprinting) to target ads, and simply using the service is treated as consent. Opt-in consent is required for non-essential tracking under GDPR and the ePrivacy rules.
+        recommendation: Look for tracking and ad-personalisation opt-outs. In the EU and UK you can refuse non-essential cookies; in California you can opt out of sharing for cross-context advertising.
+        sources: [gdpr_art7, eu_eprivacy, us_ccpa]
+        hidden_reason: Consent is buried in the data-collection paragraph rather than requested through a separate choice.
+  - id: user_content
+    label: Licence to Your Content
+    category: privacy_data
+    importance: high
+    description: Rights the provider takes over content you upload.
+    keywords: ["user content", "your content", "license", "licence", "royalty-free", "perpetual", "irrevocable", "sublicensable"]
+    prototype: "You grant us a worldwide, non-exclusive, royalty-free license to use, host and display your content solely to operate the service."
+    market_standard: A licence limited to operating the service. Starting to use people's content for new purposes such as AI training through a quiet or retroactive change of terms may be unfair or deceptive (FTC).
+    sources: [us_ftc_ai_terms]
+    red_flags:
+      - id: perpetual_license
+        title: Perpetual, irrevocable licence to your content
+        pattern: '(perpetual|irrevocable)[^.]{0,120}(licen[cs]e|right)[^.]{0,200}(content|upload|submit|post)|(content|upload|submit)[^.]{0,200}(perpetual|irrevocable)[^.]{0,60}(licen[cs]e|right)'
+        severity: high
+        risk_for: [user]
+        explanation: The provider keeps rights to use, modify and sublicense what you upload, even after you delete it or close your account.
+        recommendation: Avoid uploading sensitive or valuable content, or negotiate a licence that ends on deletion.
+      - id: ai_training
+        title: Your content may be used to train AI models
+        pattern: '(train|improve|develop)[^.]{0,80}(machine learning|artificial intelligence|\bai\b|models|algorithms)[^.]{0,120}(content|data|input|submissions)|(content|data|input)[^.]{0,120}(train|training)[^.]{0,40}(models|ai|machine learning)'
+        exclude_if: '(do not|will not|never)\s+(use|train)'
+        severity: medium
+        risk_for: [user]
+        explanation: What you write or upload may be used to train AI systems.
+        recommendation: Look for an AI-training opt-out in your account settings.
+        sources: [us_ftc_ai_terms]
+  - id: account_termination
+    label: Suspension & Account Termination
+    category: termination_exit
+    importance: high
+    description: The provider's right to suspend or close your account.
+    keywords: ["suspend", "terminate your account", "termination", "deactivate", "at any time", "without notice"]
+    prototype: "We may suspend or terminate your account for violation of these terms after notice, and you may export your data."
+    market_standard: Suspensions and account closures come with a statement of reasons (EU Digital Services Act Art. 17), and users can obtain a copy of their personal data (GDPR data-portability and access rights).
+    sources: [eu_dsa, gdpr_art12_22]
+    red_flags:
+      - id: termination_no_reason
+        title: Account can be terminated at any time for any reason
+        pattern: '(suspend|terminat|deactivat|disable)[^.]{0,80}(account|access|service)[^.]{0,120}(any time|any reason|no reason|without (prior )?notice|sole discretion)'
+        severity: high
+        risk_for: [user]
+        explanation: You can lose access to your account, data and paid subscription at any time, with no explanation or refund.
+        recommendation: Keep independent backups, and look for a data export period and a refund of prepaid fees.
+  - id: billing
+    label: Subscriptions, Billing & Refunds
+    category: financial
+    importance: medium
+    description: Auto-renewals, cancellation, refunds and price changes.
+    keywords: ["subscription", "auto-renew", "automatically renew", "billing", "refund", "cancel", "free trial", "recurring"]
+    prototype: "Subscriptions automatically renew unless cancelled before the renewal date. You can cancel at any time in your account settings."
+    market_standard: Clear disclosure and consent before automatic renewal, and easy online cancellation (California Automatic Renewal Law). In India, recurring card and UPI debits require a pre-debit notice at least 24 hours before each charge (RBI).
+    sources: [us_ca_arl, in_rbi_emandate]
+    references: [us_ca_arl, in_rbi_emandate]
+    red_flags:
+      - id: no_refunds
+        title: No refunds under any circumstances
+        pattern: '(all (fees|payments|charges) are )?non[- ]?refundable|no refunds?'
+        severity: medium
+        risk_for: [user]
+        explanation: You cannot get money back, even if the service is discontinued or never works for you.
+        recommendation: Look for a refund right for service failure or early termination by the provider.
+      - id: trial_conversion
+        title: Free trial converts to a paid plan automatically
+        pattern: '(free trial|trial period)[^.]{0,200}(automatically|will be charged|convert)'
+        severity: medium
+        risk_for: [user]
+        explanation: You will be charged automatically when the trial ends unless you remember to cancel.
+        recommendation: Set a reminder before the trial ends, or ask for a renewal notice.
+  - id: governing_law
+    label: Governing Law & Venue
+    category: legal_exposure
+    importance: medium
+    description: Which law and courts apply.
+    keywords: ["governed by", "laws of", "jurisdiction", "venue", "courts of"]
+    prototype: "These Terms are governed by the laws of the State of California and disputes shall be heard in San Francisco."
+    market_standard: Consumers keep the protection of the mandatory consumer laws of their home country (EU Rome I, Art. 6), and in India they can file in their local consumer commission.
+    sources: [eu_rome1, in_cpa_2019]
+    red_flags:
+      - id: foreign_venue
+        title: Disputes must be brought in a distant forum
+        pattern: '(exclusive(ly)?|solely)[^.]{0,40}(jurisdiction|venue)[^.]{0,80}(courts? (of|in|located in))'
+        severity: low
+        risk_for: [user]
+        explanation: You may have to travel to, or hire lawyers in, another state or country to bring a claim.
+        recommendation: Check whether your local consumer law overrides this clause. It often does.
+hidden_patterns:
+  - id: incorporated_policies
+    title: Additional terms incorporated from other pages
+    pattern: '(incorporated (herein )?by reference|form(s)? part of these terms|subject to (our|the) (additional|supplemental) terms|(policies|guidelines|rules) (posted|available) (on|at))'
+    severity: medium
+    risk_for: [user]
+    explanation: Binding obligations are spread across other pages that you may never read.
+    recommendation: Open and review every linked policy, especially those covering acceptable use, payments and privacy.
+    hidden_reason: Obligations are incorporated by reference instead of appearing in the main terms.
+  - id: indemnify_provider
+    title: You must indemnify the provider
+    pattern: '(you|user)[^.]{0,30}(agree to|shall|will)[^.]{0,20}(defend,? )?(indemnify|hold harmless)'
+    severity: medium
+    risk_for: [user]
+    explanation: You pay the provider's legal costs if a third party sues it over your use of the service.
+    recommendation: Be aware of this exposure, and limit your use for sensitive or commercial purposes.
+    hidden_reason: User indemnities are buried in consumer terms where few people expect them.

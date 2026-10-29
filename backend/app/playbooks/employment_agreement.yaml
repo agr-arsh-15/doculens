@@ -1,0 +1,220 @@
+id: employment_agreement
+name: Employment Agreement
+version: "2026.10.29"
+description: Full employment contracts covering duties, pay, restrictive covenants, IP, termination and disputes.
+detection:
+  title_keywords: ["employment agreement", "employment contract", "contract of employment", "service agreement", "terms of employment", "executive agreement"]
+  prototypes:
+    - "This Employment Agreement is entered into between the Employer and the Employee. The Employee shall serve as ... and devote full working time. Remuneration, leave, confidentiality, intellectual property, termination, restrictive covenants and governing law."
+perspectives:
+  - id: employee
+    label: Employee
+    description: You are the person being employed.
+    aliases: ["employee", "executive", "you"]
+  - id: employer
+    label: Employer
+    description: You are the company employing someone.
+    aliases: ["employer", "company", "management"]
+default_perspective: employee
+clauses:
+  - id: compensation
+    label: Remuneration
+    category: financial
+    importance: critical
+    expected: true
+    missing:
+      severity: high
+      risk_for: [employee, employer]
+      explanation: The agreement does not set out remuneration, so the pay terms are unclear and hard to enforce.
+    description: Salary, benefits, increments, deductions and payment timing.
+    keywords: ["salary", "remuneration", "compensation", "ctc", "benefits", "increment", "bonus"]
+    prototype: "The Employee shall be paid a gross annual salary payable monthly in arrears together with benefits as per company policy."
+    market_standard: Salary is stated, and deductions are limited to those the law permits (Code on Wages, 2019 s.18 in India; Employment Rights Act 1996 s.13 in the UK, which requires a legal basis or prior written consent).
+    sources: [in_code_on_wages, uk_era_s13]
+    red_flags:
+      - id: unilateral_deductions
+        title: Employer may deduct any amount from salary
+        pattern: '(deduct|set[- ]?off|withhold)(?![^.]{0,40}\bawarded\b)[^.]{0,120}(any (amount|sum|dues)|from (your|the employee.s) (salary|wages|final settlement|full and final))'
+        severity: high
+        risk_for: [employee]
+        explanation: The employer can recover alleged dues directly from your salary or final settlement without any process.
+        recommendation: Limit deductions to statutory ones and amounts you agree to in writing.
+        sources: [in_code_on_wages, uk_era_s13]
+        jurisdiction_notes:
+          IN: Deductions from wages are regulated by the Code on Wages, 2019.
+  - id: working_hours
+    label: Working Hours & Duties
+    category: career_mobility
+    importance: medium
+    description: Duties, hours, overtime and exclusivity.
+    keywords: ["working hours", "duties", "full time", "overtime", "devote", "exclusive", "moonlighting"]
+    prototype: "The Employee shall devote the whole of working time and attention and shall work such hours as may be necessary without additional remuneration."
+    market_standard: Hours and overtime follow the law, for example a 48-hour average weekly limit in the UK (Working Time Regulations 1998) and overtime pay for non-exempt employees in the US (FLSA).
+    sources: [uk_wtr_reg4, us_flsa]
+    red_flags:
+      - id: unlimited_hours
+        title: Unlimited hours with no overtime pay
+        pattern: '(such|additional|further) hours as (may be|are) (necessary|required)[^.]{0,80}(without|no) (additional|extra|further) (remuneration|pay|compensation)'
+        severity: medium
+        risk_for: [employee]
+        explanation: You can be required to work any number of extra hours without being paid more.
+        recommendation: Define standard hours and either overtime pay or compensatory time off.
+      - id: no_side_work
+        title: Total ban on outside work or side projects
+        pattern: '(shall not|must not|may not)[^.]{0,80}(engage|be engaged|undertake|take up)[^.]{0,80}(any other|any outside|any part[- ]time|other) (employment|business|work|occupation)'
+        severity: low
+        risk_for: [employee]
+        explanation: Even unrelated freelance work, teaching or open-source contributions may be banned.
+        recommendation: Allow outside activities that do not compete and do not use company resources, subject to disclosure.
+  - id: notice_period
+    label: Notice Period
+    category: termination_exit
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [employee, employer]
+      explanation: No notice period is defined for ending the employment.
+    description: The notice required from each side.
+    keywords: ["notice period", "notice of termination", "resign", "pay in lieu", "garden leave"]
+    prototype: "Either party may terminate this agreement by giving three months written notice or payment in lieu of notice."
+    market_standard: India uses 1-3 months, with 90 days the norm in large IT firms. US employment is at will with two weeks' courtesy notice as the standard. In the UK the employer must give at least one week per year of service, up to 12 weeks.
+    sources: [et_notice_period, toi_notice_period, shrm_notice, uk_era_s86]
+    metrics:
+      - id: notice_days
+        label: Notice period
+        unit: days
+        extractor: duration
+        context: ["notice"]
+        scale_max: 180
+        worse_when: higher
+        risk_for: [employee]
+        severity_outside: medium
+        jurisdictions:
+          IN: {min: 30, max: 90, typical: 90, note: "90 days is the norm in large IT firms; banks and some IT firms use 2 months", sources: [et_notice_period, toi_notice_period]}
+          US: {min: 0, max: 30, typical: 14, note: "Two weeks is standard; four weeks is common for executives", sources: [shrm_notice]}
+  - id: non_compete
+    label: Non-Compete
+    category: career_mobility
+    importance: high
+    description: Post-termination restrictions on competing.
+    keywords: ["non-compete", "not compete", "competing business", "restrictive covenant", "restraint of trade"]
+    prototype: "For a period after termination the Employee shall not be engaged in any business competing with the Company within the territory."
+    market_standard: Post-employment non-competes are void in California and generally void in India (s.27). In the UK they usually run 6-9 months, with 12 months the practical maximum for senior staff. In US states that allow them they must be reasonable in duration, geography and scope, and some states cap them at 12 months.
+    sources: [in_contract_act_s27, khaitan_covenants, us_ca_bpc_16600, mayerbrown_uk_covenants, aba_noncompete, seyfarth_noncompete]
+    references: [in_contract_act_s27, us_ca_bpc_16600]
+    metrics:
+      - id: non_compete_months
+        label: Non-compete duration
+        unit: months
+        extractor: duration
+        context: ["compet", "restrict", "engage"]
+        scale_max: 36
+        worse_when: higher
+        risk_for: [employee]
+        severity_outside: high
+        jurisdictions:
+          IN: {min: 0, max: 0, typical: 0, note: "Generally void post-employment in India", sources: [in_contract_act_s27, khaitan_covenants]}
+          UK: {min: 0, max: 12, typical: 6, note: "Usually 6-9 months; 12 months only for very senior staff", sources: [mayerbrown_uk_covenants, littler_uk_covenants]}
+          US: {min: 0, max: 12, typical: 6, note: "Void in California; several states cap non-competes at 12 months", sources: [seyfarth_noncompete, aba_noncompete]}
+    red_flags:
+      - id: broad_non_compete
+        title: Overly broad post-employment non-compete
+        pattern: '(after|following|post)[^.]{0,80}(termination|cessation|employment)[^.]{0,250}(compet|engage in|be employed by)|(compet)[^.]{0,200}(worldwide|anywhere|any (business|company))'
+        severity: high
+        risk_for: [employee]
+        explanation: This restricts your future employment options after you leave.
+        recommendation: Limit the restriction to named competitors for at most 6 months, paid as garden leave, or remove it.
+        sources: [in_contract_act_s27, us_ca_bpc_16600]
+        severity_by_jurisdiction:
+          IN: medium
+        jurisdiction_notes:
+          IN: Generally unenforceable after employment under s.27, but it can still deter future employers.
+  - id: ip_assignment
+    label: Intellectual Property
+    category: career_mobility
+    importance: high
+    description: Ownership of work product and inventions.
+    keywords: ["intellectual property", "inventions", "work made for hire", "assign", "moral rights", "copyright"]
+    prototype: "All intellectual property created by the Employee in the course of employment shall vest in the Company."
+    market_standard: The employer owns work made in the course of employment (the default rule in India and the UK). In California, inventions developed on your own time without company resources and unrelated to the business cannot be claimed.
+    sources: [in_copyright_s17, uk_cdpa_s11, uk_patents_s39, us_ca_lab_2870]
+    red_flags:
+      - id: ip_overreach
+        title: IP assignment extends beyond employment duties
+        pattern: '(whether or not|regardless of whether)[^.]{0,120}(working hours|company time|company resources|in the course)|(outside|after)\s+(of\s+)?(working|office|business)\s+hours'
+        severity: high
+        risk_for: [employee]
+        explanation: The employer may claim ownership of work created in your own time.
+        recommendation: Limit assignment to work done in the course of your employment, and list your prior inventions.
+  - id: termination
+    label: Termination
+    category: termination_exit
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [employee, employer]
+      explanation: There are no termination provisions, so the grounds and process for ending employment are unclear.
+    description: Grounds, process and payments on termination.
+    keywords: ["terminate", "termination", "dismissal", "for cause", "without cause", "summary dismissal", "severance"]
+    prototype: "The Company may terminate employment summarily for gross misconduct, or otherwise on notice. On termination the Employee shall return company property."
+    market_standard: Termination without cause comes with notice or pay in lieu. An employer that asks employees for notice should give the same notice in return, and UK law sets a statutory minimum notice from the employer.
+    sources: [shrm_notice, uk_era_s86]
+    red_flags:
+      - id: vague_cause
+        title: '"Cause" is vague or subjective'
+        pattern: '(cause|misconduct)[^.]{0,120}(in the (sole )?(opinion|judgment|judgement) of|as determined by)[^.]{0,40}(company|employer|management|board)'
+        severity: medium
+        risk_for: [employee]
+        explanation: The employer decides on its own what counts as cause, which makes it easy to terminate without notice or severance.
+        recommendation: Define cause through an objective, exhaustive list, with a right to respond before termination.
+  - id: confidentiality
+    label: Confidentiality
+    category: legal_exposure
+    importance: medium
+    expected: true
+    missing:
+      severity: low
+      risk_for: [employer]
+      explanation: There is no confidentiality obligation protecting the employer's information.
+    description: Duty to protect confidential information.
+    keywords: ["confidential", "proprietary", "trade secret", "non-disclosure"]
+    prototype: "The Employee shall not during or after employment disclose any confidential information of the Company."
+    market_standard: Trade secrets stay protected while they remain secret; other business information is usually protected for 2-5 years. Confidentiality terms cannot stop protected whistleblowing (UK ERA s.43J; US 18 U.S.C. 1833(b)).
+    sources: [moritthock_nda, aba_nda, uk_era_s43j, us_dtsa_1833]
+  - id: dispute_resolution
+    label: Governing Law & Disputes
+    category: legal_exposure
+    importance: medium
+    description: Governing law, forum and arbitration.
+    keywords: ["governed by", "jurisdiction", "arbitration", "courts of", "dispute"]
+    prototype: "Any dispute shall be referred to arbitration by a sole arbitrator appointed by the Company, seated at Mumbai."
+    market_standard: Disputes go to the courts or to a neutral arbitrator. In India, one side cannot appoint the sole arbitrator (Perkins Eastman 2019; CORE 2024), and in the EU an employee keeps the protection of the law of the place where they habitually work (Rome I, Art. 8).
+    sources: [in_sc_perkins, in_sc_core, eu_rome1_art8]
+    red_flags:
+      - id: employer_appoints_arbitrator
+        title: Employer appoints the sole arbitrator
+        pattern: 'arbitrat[^.]{0,120}(appointed|nominated|chosen) (solely )?by the (company|employer)'
+        severity: high
+        risk_for: [employee]
+        explanation: The employer gets to pick the person who decides disputes against it.
+        recommendation: Require a neutral or jointly appointed arbitrator, or use the courts.
+        sources: [in_sc_perkins, in_sc_core, in_arbitration_act]
+hidden_patterns:
+  - id: policy_incorporation
+    title: Terms incorporated from policies "as amended from time to time"
+    pattern: '(polic(y|ies)|handbook|rules|code of conduct)[^.]{0,120}(amended|modified|updated|revised)\s+from\s+time\s+to\s+time'
+    severity: medium
+    risk_for: [employee]
+    explanation: The employer can change binding terms on its own by updating documents that are not attached.
+    recommendation: Ask for the referenced policies, and make adverse changes to pay or notice subject to your consent.
+    hidden_reason: Obligations live in external documents that you have not been shown.
+  - id: survival_indefinite
+    title: Obligations survive termination indefinitely
+    pattern: 'surviv[^.]{0,120}(indefinitely|in perpetuity|perpetual|without limit)'
+    severity: medium
+    risk_for: [employee]
+    explanation: Some restrictions never expire, even many years after you leave.
+    recommendation: Limit survival to 2-3 years, except for trade secrets.
+    hidden_reason: Survival language usually sits in boilerplate near the end of the agreement.

@@ -1,0 +1,190 @@
+id: dpa_compliance
+name: DPA / Compliance Policy
+version: "2026.10.29"
+description: Data Processing Agreements, information-security and regulatory compliance policies (GDPR, DPDP, SOC 2, ISO 27001, HIPAA).
+detection:
+  title_keywords: ["data processing agreement", "data processing addendum", "dpa", "data protection policy", "information security policy", "compliance policy", "soc 2", "iso 27001", "gdpr", "hipaa", "business associate agreement"]
+  prototypes:
+    - "This Data Processing Agreement governs the processing of personal data by the Processor on behalf of the Controller under Article 28 GDPR. Sub-processors, security measures, breach notification, audits, international transfers, deletion and return of data."
+    - "This information security and data protection compliance policy defines encryption controls, access control, incident response and breach notification, retention, audit logging and monitoring."
+perspectives:
+  - id: controller
+    label: Controller / Customer
+    description: You own the data and rely on these commitments.
+    aliases: ["controller", "customer", "data fiduciary", "client"]
+  - id: processor
+    label: Processor / Vendor
+    description: You process data on behalf of others and must meet these commitments.
+    aliases: ["processor", "vendor", "provider", "data processor", "service provider"]
+default_perspective: controller
+clauses:
+  - id: processing_instructions
+    label: Scope & Processing Instructions
+    category: privacy_data
+    importance: high
+    expected: true
+    missing:
+      severity: high
+      risk_for: [controller]
+      explanation: GDPR Art. 28(3)(a) requires the processor to act only on documented instructions. This is not stated.
+    description: Subject matter, nature, purpose and duration of processing; documented instructions.
+    keywords: ["documented instructions", "on behalf of", "scope of processing", "nature and purpose", "categories of data subjects", "subject matter"]
+    prototype: "The Processor shall process Personal Data only on documented instructions from the Controller for the purposes described in Annex 1."
+    market_standard: The contract describes the processing, and the processor acts only on the controller's documented instructions and tells the controller if an instruction appears unlawful (GDPR Art. 28(3)(a)). India's DPDP Act lets a data fiduciary use a processor only under a valid contract (s.8(2)).
+    sources: [gdpr_art28, edpb_07_2020, in_dpdp_act]
+    references: [gdpr_art28, in_dpdp_act]
+  - id: security_measures
+    label: Security Measures
+    category: privacy_data
+    importance: critical
+    expected: true
+    missing:
+      severity: high
+      risk_for: [controller]
+      explanation: There are no technical and organisational measures (TOMs), as required by GDPR Art. 32.
+    description: Encryption, access control, testing and certifications.
+    keywords: ["technical and organizational measures", "technical and organisational measures", "encryption", "aes-256", "tls", "access control", "multi-factor", "soc 2", "iso 27001", "penetration test"]
+    prototype: "Processor shall maintain technical and organisational measures including AES-256 encryption at rest, TLS 1.2+ in transit, role-based access control and MFA."
+    market_standard: Appropriate technical and organisational measures such as encryption, access control, logging and regular testing (GDPR Art. 32; DPDP Rules 2025, r.6), backed by independent assurance such as ISO/IEC 27001 certification or a SOC 2 report.
+    sources: [gdpr_art32_34, in_dpdp_rules, iso_27001, aicpa_soc2]
+    references: [gdpr_art32_34, iso_27001, aicpa_soc2]
+  - id: access_control
+    label: Access Control & Personnel
+    category: privacy_data
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [controller]
+      explanation: There are no access-control or personnel confidentiality commitments.
+    description: Least privilege, access reviews and staff confidentiality.
+    keywords: ["least privilege", "role-based access", "access control", "need to know", "access reviews", "confidentiality obligations", "personnel", "authorized personnel"]
+    prototype: "Access to personal data is limited to authorised personnel on a need-to-know basis under confidentiality obligations, with quarterly access reviews."
+    market_standard: Access limited to authorised staff who are bound by confidentiality (GDPR Art. 28(3)(b)), with access controls and access logs that are monitored and reviewed (DPDP Rules 2025, r.6).
+    sources: [gdpr_art28, edpb_07_2020, in_dpdp_rules, iso_27001]
+    references: [gdpr_art28, iso_27001]
+  - id: breach_notification
+    label: Breach Notification
+    category: privacy_data
+    importance: critical
+    expected: true
+    missing:
+      severity: critical
+      risk_for: [controller]
+      explanation: There is no breach notification commitment. Without one, you cannot meet the 72-hour regulator deadline under GDPR Art. 33 or the DPDP Act.
+    description: Timeline and content of incident and breach notices.
+    keywords: ["personal data breach", "security incident", "notify", "without undue delay", "72 hours", "48 hours", "24 hours", "incident response"]
+    prototype: "Processor shall notify Controller without undue delay and in any event within 48 hours of becoming aware of a Personal Data Breach, providing details required by Art. 33(3)."
+    market_standard: The processor notifies the controller without undue delay and within a fixed number of hours, with the details listed in Art. 33(3), so the controller can meet its own 72-hour deadline. In India the DPDP Rules 2025 require a detailed report to the Board within 72 hours, and CERT-In requires cyber incidents to be reported to it within 6 hours.
+    sources: [gdpr_art32_34, edpb_09_2022, foxrothschild_dpa, in_dpdp_rules, in_certin_2022]
+    references: [gdpr_art32_34, in_dpdp_rules, in_certin_2022, us_hipaa_breach]
+    metrics:
+      - id: breach_notice_hours
+        label: Breach notification to controller
+        unit: hours
+        extractor: duration
+        context: ["breach", "incident", "notif"]
+        exclude_context: ["supervisory authority", "regulator", "data protection board", "authorities", "cert-in"]
+        range: {min: 0, max: 48, typical: 24, note: "The processor's deadline must leave the controller time within its 72-hour regulatory window", sources: [gdpr_art32_34, edpb_09_2022, foxrothschild_dpa]}
+        scale_max: 240
+        worse_when: higher
+        risk_for: [controller]
+        severity_outside: high
+    red_flags:
+      - id: vague_breach_timing
+        title: Breach notice timing is vague
+        pattern: '(notify|inform)[^.]{0,80}(as soon as (reasonably )?practicable|in a timely manner|promptly|within a reasonable (time|period))'
+        exclude_if: '\b(\d+|twenty[- ]four|forty[- ]eight|seventy[- ]two)\s*(\(\d+\)\s*)?hours'
+        severity: medium
+        risk_for: [controller]
+        explanation: There is no hard deadline, so you may learn of a breach too late to meet regulatory deadlines.
+        recommendation: Specify notice within 24-48 hours of the processor becoming aware of the breach.
+        sources: [edpb_09_2022, foxrothschild_dpa]
+  - id: sub_processors
+    label: Sub-processors
+    category: privacy_data
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [controller]
+      explanation: There are no sub-processor controls, as required by GDPR Art. 28(2) and 28(4).
+    description: Authorisation, notice and objection rights for sub-processors.
+    keywords: ["sub-processor", "subprocessor", "sub processor", "engage another processor", "onward transfer"]
+    prototype: "Processor may engage sub-processors listed in Annex 3, will give thirty days notice of new sub-processors, and Controller may object."
+    market_standard: Sub-processors only with the controller's prior specific or general written authorisation, advance notice of changes with a real opportunity to object, and the same data-protection obligations flowed down (GDPR Art. 28(2) and 28(4)). The EU Standard Contractual Clauses ask the parties to fix the notice period in the contract.
+    sources: [gdpr_art28, edpb_07_2020, eu_scc]
+    red_flags:
+      - id: sub_processor_no_notice
+        title: Sub-processors can be added without notice or objection
+        pattern: 'sub-?\s?processors?[^.]{0,160}(without (prior )?(notice|consent|approval)|at (its|their) (sole )?discretion|general authori[sz]ation)'
+        exclude_if: '(object|objection)'
+        severity: high
+        risk_for: [controller]
+        explanation: Your data can be passed to new companies without you knowing.
+        recommendation: Require advance notice of new sub-processors (for example 30 days) and a right to object.
+        sources: [gdpr_art28, edpb_07_2020]
+  - id: audit_rights
+    label: Audit Rights
+    category: legal_exposure
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [controller]
+      explanation: There is no right to audit or receive compliance reports (GDPR Art. 28(3)(h)).
+    description: Controller audits, third-party reports and inspections.
+    keywords: ["audit", "inspection", "soc 2 report", "audit report", "compliance verification", "third-party assessment"]
+    prototype: "Processor shall make available SOC 2 Type II reports annually and allow audits by the Controller or an independent auditor on reasonable notice."
+    market_standard: The processor makes available all information needed to demonstrate compliance and allows for and contributes to audits, including inspections, by the controller or an auditor it mandates (GDPR Art. 28(3)(h)). Independent reports such as SOC 2 can support this.
+    sources: [gdpr_art28, edpb_07_2020, aicpa_soc2]
+  - id: retention_deletion
+    label: Retention, Return & Deletion
+    category: privacy_data
+    importance: high
+    expected: true
+    missing:
+      severity: medium
+      risk_for: [controller]
+      explanation: There is no commitment to delete or return data at the end of processing (GDPR Art. 28(3)(g)).
+    description: Retention schedule, data return and deletion on termination.
+    keywords: ["retention", "delete", "deletion", "return", "erasure", "secure disposal", "destroy"]
+    prototype: "On termination Processor shall return or delete all Personal Data within thirty days and certify deletion, unless retention is required by law."
+    market_standard: When the service ends, the processor deletes or returns all personal data at the controller's choice and deletes existing copies, unless law requires the data to be kept (GDPR Art. 28(3)(g)).
+    sources: [gdpr_art28, edpb_07_2020]
+  - id: international_transfers
+    label: International Transfers
+    category: privacy_data
+    importance: medium
+    description: Cross-border transfer mechanisms.
+    keywords: ["international transfer", "standard contractual clauses", "sccs", "third country", "cross-border", "data localization", "data localisation"]
+    prototype: "Transfers outside the EEA are made under the Standard Contractual Clauses (2021/914) with transfer impact assessments."
+    market_standard: Transfers outside the EEA rely on an adequacy decision (such as the EU-US Data Privacy Framework) or the Standard Contractual Clauses (GDPR Arts. 44-49). India's DPDP Act permits transfers except to countries the government restricts (s.16).
+    sources: [gdpr_art44_49, eu_scc, us_dpf, in_dpdp_act]
+    references: [gdpr_art44_49, in_dpdp_act]
+  - id: data_subject_requests
+    label: Data Subject Requests
+    category: privacy_data
+    importance: medium
+    description: Assistance with access, deletion and other rights requests.
+    keywords: ["data subject request", "data subject rights", "right to erasure", "access request", "assist the controller", "dsar"]
+    prototype: "Processor shall assist Controller in responding to data subject requests within ten business days."
+    market_standard: The processor helps the controller answer data-subject requests (GDPR Art. 28(3)(e)) quickly enough for the controller to respond within one month.
+    sources: [gdpr_art28, gdpr_art12_22, edpb_07_2020]
+hidden_patterns:
+  - id: liability_cap_in_dpa
+    title: DPA liability is capped by the main agreement
+    pattern: '(liability|liable)[^.]{0,160}(subject to|governed by|limited by|in accordance with)[^.]{0,60}(limitation of liability|main agreement|master agreement|principal agreement)'
+    severity: medium
+    risk_for: [controller]
+    explanation: Data-breach liability may be limited to the low general cap of the main contract.
+    recommendation: Negotiate a separate, higher cap for data-protection breaches.
+    hidden_reason: The liability cap is inherited from another document by cross-reference.
+  - id: anonymised_use
+    title: Processor may use "anonymised" or aggregated data for its own purposes
+    pattern: '(anonymi[sz]ed|aggregated|de-?identified)[^.]{0,120}(own purposes|any purpose|improve|commercial|product development|train)'
+    severity: medium
+    risk_for: [controller]
+    explanation: Weakly anonymised data can still be re-identified, and the processor turns your data into its own asset.
+    recommendation: Restrict this to truly anonymous statistics, or prohibit it.
+    hidden_reason: Secondary use is framed as harmless aggregation.

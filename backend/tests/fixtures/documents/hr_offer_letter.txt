@@ -1,0 +1,33 @@
+CONFIDENTIAL EMPLOYMENT OFFER LETTER
+
+Date: October 15, 2024
+To: Alex Morgan
+Address: 742 Evergreen Terrace, Seattle, WA 98101
+From: Apex Technologies Inc.
+
+Dear Alex,
+
+Apex Technologies Inc. (the "Company") is pleased to offer you the full-time position of Senior Machine Learning Engineer reporting directly to the Chief Technology Officer.
+
+1. Compensation & Benefits:
+Your starting annual base salary will be $165,000 USD per year, payable bi-weekly in accordance with standard payroll practices. You will be eligible for an annual performance bonus target of 15% ($24,750 USD). Additionally, subject to Board approval, you will be granted stock options for 25,000 shares vesting over four (4) years with a one-year cliff. Comprehensive health insurance, dental, vision, and 401(k) retirement matching up to 4% will commence on your start date.
+
+2. Start Date & Probation Period:
+Your anticipated start date will be November 18, 2024. Your employment is subject to a standard ninety (90) days probation period during which performance benchmarks will be evaluated.
+
+3. Restrictive Covenants & Non-Compete:
+During your employment and for a period of two (2) years following termination of employment for any reason, you agree that you shall not directly or indirectly engage in, consult for, or establish any competing business worldwide that develops legal NLP or document intelligence technologies. Furthermore, you agree not to solicit any employees or customers of the Company for twenty-four (24) months.
+
+4. Intellectual Property & Inventions:
+All inventions, codebase, models, documentation, and technical designs created by you within the scope of your employment or utilizing Company resources shall constitute "work made for hire" and shall be the sole and exclusive intellectual property of Apex Technologies Inc.
+
+5. Termination & Notice:
+Your employment is at-will. Either party may terminate the employment relationship at any time; however, the Company requests thirty (30) days prior written notice of resignation. In the event of involuntary termination without cause, the Company shall provide two (2) months base salary as severance pay.
+
+6. Governing Law:
+This Agreement shall be governed by and construed in accordance with the laws of the State of Washington without regard to conflict of law principles.
+
+Sincerely,
+Sarah Jenkins, VP of People Operations
+Apex Technologies Inc.
+contact@apextech-example.com

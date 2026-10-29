@@ -1,0 +1,561 @@
+# Trusted sources behind every market standard, benchmark range and legal reference in the playbooks.
+# Tiers: official (statutes, regulators, courts), professional (recognised professional and standards
+# bodies), law_firm (published guidance by established law firms), news (major business news).
+# Every url must be https and its host must match a domain allowed for its tier.
+
+allowed_domains:
+  official:
+    - eur-lex.europa.eu
+    - edpb.europa.eu
+    - commission.europa.eu
+    - legislation.gov.uk
+    - gov.uk
+    - ico.org.uk
+    - leginfo.legislature.ca.gov
+    - oag.ca.gov
+    - nysenate.gov
+    - dol.gov
+    - ftc.gov
+    - hhs.gov
+    - dataprivacyframework.gov
+    - indiacode.nic.in
+    - meity.gov.in
+    - labour.gov.in
+    - msme.gov.in
+    - rbi.org.in
+    - cert-in.org.in
+    - sci.gov.in
+  professional:
+    - iso.org
+    - aicpa-cima.com
+    - shrm.org
+    - americanbar.org
+    - adr.org
+    - law.cornell.edu
+  law_firm:
+    - nortonrosefulbright.com
+    - mayerbrown.com
+    - littler.co.uk
+    - khaitanco.com
+    - nishithdesai.com
+    - dlapiper.com
+    - leglobal.law
+    - jsalaw.com
+    - seyfarth.com
+    - moritthock.com
+    - connkavanaugh.com
+    - faegredrinker.com
+    - jdsupra.com
+  news:
+    - economictimes.com
+    - timesofindia.indiatimes.com
+
+# Hosts that block automated requests (bot protection returns 403/404/202 to scripts).
+# The link checker reports these as warnings instead of failures.
+bot_protected:
+  - eur-lex.europa.eu
+  - legislation.gov.uk
+  - leginfo.legislature.ca.gov
+  - nysenate.gov
+  - dol.gov
+  - ftc.gov
+  - hhs.gov
+  - iso.org
+  - americanbar.org
+  - indiacode.nic.in
+  - jsalaw.com
+
+sources:
+  # ---------- European Union ----------
+  - id: gdpr
+    title: General Data Protection Regulation (EU) 2016/679
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/reg/2016/679/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: gdpr_art5
+    title: GDPR Art. 5 - Principles (purpose limitation, data minimisation, storage limitation)
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/reg/2016/679/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: gdpr_art7
+    title: GDPR Art. 7 and Recital 32 - Conditions for consent
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/reg/2016/679/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: gdpr_art12_22
+    title: GDPR Arts. 12-22 - Data subject rights (response within one month)
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/reg/2016/679/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: gdpr_art13_14
+    title: GDPR Arts. 13-14 - Information to be provided to data subjects
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/reg/2016/679/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: gdpr_art28
+    title: GDPR Art. 28 - Processor contracts (instructions, sub-processors, deletion, audits)
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/reg/2016/679/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: gdpr_art32_34
+    title: GDPR Arts. 32-34 - Security of processing and breach notification (72 hours to the regulator)
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/reg/2016/679/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: gdpr_art44_49
+    title: GDPR Arts. 44-49 - Transfers of personal data to third countries
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/reg/2016/679/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: eu_eprivacy
+    title: ePrivacy Directive 2002/58/EC, Art. 5(3) - Consent for cookies and tracking
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/dir/2002/58/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: eu_late_payment
+    title: Late Payment Directive 2011/7/EU - 30-day default and 60-day cap on B2B payment terms
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/dir/2011/7/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: eu_unfair_terms
+    title: Unfair Contract Terms Directive 93/13/EEC
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/dir/1993/13/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: eu_dsa
+    title: Digital Services Act (EU) 2022/2065, Art. 17 - Statement of reasons for account restrictions
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/reg/2022/2065/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: eu_p2b
+    title: Platform-to-Business Regulation (EU) 2019/1150, Art. 3 - 15 days' notice of changes to terms
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/reg/2019/1150/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: eu_rome1
+    title: Rome I Regulation (EC) 593/2008, Art. 6 - Law applicable to consumer contracts
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/reg/2008/593/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: eu_rome1_art8
+    title: Rome I Regulation (EC) 593/2008, Art. 8 - Employees keep the protection of the law where they habitually work
+    publisher: EUR-Lex (Official Journal of the EU)
+    url: https://eur-lex.europa.eu/eli/reg/2008/593/oj
+    tier: official
+    jurisdictions: [EU]
+  - id: eu_scc
+    title: Standard Contractual Clauses for international transfers (Decision (EU) 2021/914)
+    publisher: European Commission
+    url: https://commission.europa.eu/law/law-topic/data-protection/international-dimension-data-protection/standard-contractual-clauses-scc_en
+    tier: official
+    jurisdictions: [EU]
+  - id: edpb_07_2020
+    title: EDPB Guidelines 07/2020 on the concepts of controller and processor
+    publisher: European Data Protection Board
+    url: https://www.edpb.europa.eu/system/files/documents/2023-10/EDPB_guidelines_202007_controllerprocessor_final_en.pdf
+    tier: official
+    jurisdictions: [EU]
+  - id: edpb_09_2022
+    title: EDPB Guidelines 9/2022 on personal data breach notification
+    publisher: European Data Protection Board
+    url: https://www.edpb.europa.eu/system/files/documents/2023-04/edpb_guidelines_202209_personal_data_breach_notification_v2.0_en.pdf
+    tier: official
+    jurisdictions: [EU]
+
+  # ---------- United Kingdom ----------
+  - id: uk_era_s86
+    title: Employment Rights Act 1996, s.86 - Minimum periods of notice
+    publisher: legislation.gov.uk (The National Archives)
+    url: https://www.legislation.gov.uk/ukpga/1996/18/section/86
+    tier: official
+    jurisdictions: [UK]
+  - id: uk_era_s13
+    title: Employment Rights Act 1996, s.13 - Unauthorised deductions from wages
+    publisher: legislation.gov.uk (The National Archives)
+    url: https://www.legislation.gov.uk/ukpga/1996/18/section/13
+    tier: official
+    jurisdictions: [UK]
+  - id: uk_era_s43j
+    title: Employment Rights Act 1996, s.43J - Confidentiality clauses cannot stop protected disclosures
+    publisher: legislation.gov.uk (The National Archives)
+    url: https://www.legislation.gov.uk/ukpga/1996/18/section/43J
+    tier: official
+    jurisdictions: [UK]
+  - id: uk_wtr_reg4
+    title: Working Time Regulations 1998, reg. 4 - 48-hour average weekly limit
+    publisher: legislation.gov.uk (The National Archives)
+    url: https://www.legislation.gov.uk/uksi/1998/1833/regulation/4
+    tier: official
+    jurisdictions: [UK]
+  - id: uk_ucta_s2
+    title: Unfair Contract Terms Act 1977, s.2 - No exclusion of liability for negligence causing death or injury
+    publisher: legislation.gov.uk (The National Archives)
+    url: https://www.legislation.gov.uk/ukpga/1977/50/section/2
+    tier: official
+    jurisdictions: [UK]
+  - id: uk_cra_s31
+    title: Consumer Rights Act 2015, s.31 - Statutory consumer rights cannot be excluded
+    publisher: legislation.gov.uk (The National Archives)
+    url: https://www.legislation.gov.uk/ukpga/2015/15/section/31
+    tier: official
+    jurisdictions: [UK]
+  - id: uk_cra_s65
+    title: Consumer Rights Act 2015, s.65 - No exclusion of liability for death or personal injury
+    publisher: legislation.gov.uk (The National Archives)
+    url: https://www.legislation.gov.uk/ukpga/2015/15/section/65
+    tier: official
+    jurisdictions: [UK]
+  - id: uk_late_payment
+    title: Late Payment of Commercial Debts (Interest) Act 1998
+    publisher: legislation.gov.uk (The National Archives)
+    url: https://www.legislation.gov.uk/ukpga/1998/20/contents
+    tier: official
+    jurisdictions: [UK]
+  - id: uk_patents_s39
+    title: Patents Act 1977, s.39 - Right to employees' inventions
+    publisher: legislation.gov.uk (The National Archives)
+    url: https://www.legislation.gov.uk/ukpga/1977/37/section/39
+    tier: official
+    jurisdictions: [UK]
+  - id: uk_cdpa_s11
+    title: Copyright, Designs and Patents Act 1988, s.11 - Works made in the course of employment
+    publisher: legislation.gov.uk (The National Archives)
+    url: https://www.legislation.gov.uk/ukpga/1988/48/section/11
+    tier: official
+    jurisdictions: [UK]
+  - id: uk_gov_noncompete
+    title: Reform of post-termination non-compete clauses (government response, 3-month limit proposal)
+    publisher: GOV.UK (Department for Business and Trade)
+    url: https://www.gov.uk/government/consultations/measures-to-reform-post-termination-non-compete-clauses-in-contracts-of-employment
+    tier: official
+    jurisdictions: [UK]
+  - id: uk_cma37
+    title: Unfair contract terms guidance (CMA37)
+    publisher: GOV.UK (Competition and Markets Authority)
+    url: https://www.gov.uk/government/publications/unfair-contract-terms-cma37
+    tier: official
+    jurisdictions: [UK]
+  - id: uk_ico_sar
+    title: Right of access - how long do we have to comply? (one month)
+    publisher: Information Commissioner's Office
+    url: https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/individual-rights/right-of-access/what-should-we-consider-when-responding-to-a-request
+    tier: official
+    jurisdictions: [UK]
+
+  # ---------- United States ----------
+  - id: us_ca_bpc_16600
+    title: California Business and Professions Code s.16600 - Non-compete agreements are void
+    publisher: California Legislative Information
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=16600
+    tier: official
+    jurisdictions: [US]
+  - id: us_ca_lab_2870
+    title: California Labor Code s.2870 - Employee inventions made on own time
+    publisher: California Legislative Information
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=LAB&sectionNum=2870
+    tier: official
+    jurisdictions: [US]
+  - id: us_ca_arl
+    title: California Automatic Renewal Law, Bus. and Prof. Code s.17602 - Disclosure, consent and online cancellation
+    publisher: California Legislative Information
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=17602
+    tier: official
+    jurisdictions: [US]
+  - id: us_ny_gol_5903
+    title: New York General Obligations Law s.5-903 - Reminder required before automatic renewal of service contracts
+    publisher: The New York State Senate
+    url: https://www.nysenate.gov/legislation/laws/GOB/5-903
+    tier: official
+    jurisdictions: [US]
+  - id: us_flsa
+    title: Fair Labor Standards Act - minimum wage and overtime
+    publisher: U.S. Department of Labor
+    url: https://www.dol.gov/agencies/whd/flsa
+    tier: official
+    jurisdictions: [US]
+  - id: us_ftc_coppa
+    title: Children's Online Privacy Protection Rule (COPPA)
+    publisher: U.S. Federal Trade Commission
+    url: https://www.ftc.gov/legal-library/browse/rules/childrens-online-privacy-protection-rule-coppa
+    tier: official
+    jurisdictions: [US]
+  - id: us_ftc_fcra_employers
+    title: Using Consumer Reports - What Employers Need to Know (FCRA disclosure and written consent)
+    publisher: U.S. Federal Trade Commission
+    url: https://www.ftc.gov/business-guidance/resources/using-consumer-reports-what-employers-need-know
+    tier: official
+    jurisdictions: [US]
+  - id: us_ftc_ai_terms
+    title: AI (and other) companies - quietly changing your terms of service could be unfair or deceptive
+    publisher: U.S. Federal Trade Commission
+    url: https://www.ftc.gov/policy/advocacy-research/tech-at-ftc/2024/02/ai-other-companies-quietly-changing-your-terms-service-could-be-unfair-or-deceptive
+    tier: official
+    jurisdictions: [US]
+  - id: us_ccpa
+    title: California Consumer Privacy Act (rights to know, delete, opt out; response within 45 days)
+    publisher: California Department of Justice, Office of the Attorney General
+    url: https://oag.ca.gov/privacy/ccpa
+    tier: official
+    jurisdictions: [US]
+  - id: us_hipaa_breach
+    title: HIPAA Breach Notification Rule
+    publisher: U.S. Department of Health and Human Services
+    url: https://www.hhs.gov/hipaa/for-professionals/breach-notification/index.html
+    tier: official
+    jurisdictions: [US]
+  - id: us_dpf
+    title: EU-U.S. Data Privacy Framework
+    publisher: U.S. Department of Commerce
+    url: https://www.dataprivacyframework.gov/
+    tier: official
+    jurisdictions: [US, EU]
+  - id: us_dtsa_1833
+    title: 18 U.S.C. s.1833(b) - Whistleblower immunity notice for trade secret confidentiality terms
+    publisher: Legal Information Institute, Cornell Law School
+    url: https://www.law.cornell.edu/uscode/text/18/1833
+    tier: professional
+    jurisdictions: [US]
+
+  # ---------- India ----------
+  - id: in_contract_act_s27
+    title: Indian Contract Act, 1872, s.27 - Agreements in restraint of trade are void
+    publisher: India Code (Legislative Department, Government of India)
+    url: https://www.indiacode.nic.in/handle/123456789/2187
+    tier: official
+    jurisdictions: [IN]
+  - id: in_contract_act_s74
+    title: Indian Contract Act, 1872, s.74 - Only reasonable compensation for breach, up to the stated amount
+    publisher: India Code (Legislative Department, Government of India)
+    url: https://www.indiacode.nic.in/handle/123456789/2187
+    tier: official
+    jurisdictions: [IN]
+  - id: in_copyright_s17
+    title: Copyright Act, 1957, s.17(c) - Employer owns works made in the course of employment
+    publisher: India Code (Legislative Department, Government of India)
+    url: https://upload.indiacode.nic.in/showfile?actid=AC_CEN_9_30_00006_195714_1517807321712&filename=A1957-14.pdf&type=actfile
+    tier: official
+    jurisdictions: [IN]
+  - id: in_code_on_wages
+    title: Code on Wages, 2019, s.18 - Deductions only as authorised by the Code
+    publisher: Ministry of Labour and Employment, Government of India
+    url: https://www.labour.gov.in/static/uploads/2025/06/c328da14bbb15fc4ad571dc33e7a4ab3.pdf
+    tier: official
+    jurisdictions: [IN]
+  - id: in_cpa_2019
+    title: Consumer Protection Act, 2019
+    publisher: India Code (Department of Consumer Affairs, Government of India)
+    url: https://www.indiacode.nic.in/handle/123456789/15256
+    tier: official
+    jurisdictions: [IN]
+  - id: in_arbitration_act
+    title: Arbitration and Conciliation Act, 1996 (s.12(5) and Seventh Schedule - arbitrator independence)
+    publisher: India Code (Ministry of Law and Justice, Government of India)
+    url: https://www.indiacode.nic.in/handle/123456789/12660
+    tier: official
+    jurisdictions: [IN]
+  - id: in_msmed_s15
+    title: MSMED Act, 2006, s.15 - Payment to micro and small suppliers within 45 days
+    publisher: Ministry of Micro, Small and Medium Enterprises, Government of India
+    url: https://samadhaan.msme.gov.in/WriteReadData/DocumentFile/MSMED2006act.pdf
+    tier: official
+    jurisdictions: [IN]
+  - id: in_dpdp_act
+    title: Digital Personal Data Protection Act, 2023
+    publisher: Ministry of Electronics and Information Technology, Government of India
+    url: https://www.meity.gov.in/static/uploads/2024/02/Digital-Personal-Data-Protection-Act-2023.pdf
+    tier: official
+    jurisdictions: [IN]
+  - id: in_dpdp_rules
+    title: Digital Personal Data Protection Rules, 2025 (breach report to the Board within 72 hours)
+    publisher: Ministry of Electronics and Information Technology, Government of India
+    url: https://www.meity.gov.in/documents/act-and-policies/digital-personal-data-protection-rules-2025-gDOxUjMtQWa?pageTitle=Digital-Personal-Data-Protection-Rules-2025.pdf
+    tier: official
+    jurisdictions: [IN]
+  - id: in_certin_2022
+    title: CERT-In Directions of 28 April 2022 - Report cyber incidents within 6 hours
+    publisher: Indian Computer Emergency Response Team (CERT-In)
+    url: https://www.cert-in.org.in/PDF/CERT-In_Directions_70B_28.04.2022.pdf
+    tier: official
+    jurisdictions: [IN]
+  - id: in_rbi_emandate
+    title: RBI e-mandate framework for recurring payments - pre-debit notice at least 24 hours before each charge
+    publisher: Reserve Bank of India
+    url: https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=13374
+    tier: official
+    jurisdictions: [IN]
+  - id: in_sc_perkins
+    title: Perkins Eastman Architects v HSCC (India) Ltd (2019) - A party cannot unilaterally appoint the sole arbitrator
+    publisher: Supreme Court of India
+    url: https://api.sci.gov.in/supremecourt/2019/27558/27558_2019_6_1501_18525_Judgement_26-Nov-2019.pdf
+    tier: official
+    jurisdictions: [IN]
+  - id: in_sc_core
+    title: CORE v ECI-SPIC-SMO-MCML (JV) (2024, Constitution Bench) - Unilateral arbitrator appointment clauses are invalid
+    publisher: Supreme Court of India
+    url: https://api.sci.gov.in/supremecourt/2019/28531/28531_2019_1_1502_57055_Judgement_08-Nov-2024.pdf
+    tier: official
+    jurisdictions: [IN]
+  - id: in_sc_emaar
+    title: Emaar MGF Land v Aftab Singh (2018) - An arbitration clause cannot oust consumer commissions
+    publisher: Supreme Court of India
+    url: https://api.sci.gov.in/supremecourt/2018/26696/26696_2018_Judgement_10-Dec-2018.pdf
+    tier: official
+    jurisdictions: [IN]
+  - id: in_sc_vijaya_bank
+    title: Vijaya Bank v Prashant B. Narnaware (2025) - Minimum-service bonds are valid if reasonable
+    publisher: Supreme Court of India
+    url: https://api.sci.gov.in/supremecourt/2014/40179/40179_2014_9_1503_61700_Judgement_14-May-2025.pdf
+    tier: official
+    jurisdictions: [IN]
+
+  # ---------- Professional and standards bodies ----------
+  - id: iso_27001
+    title: ISO/IEC 27001 - Information security management systems
+    publisher: International Organization for Standardization
+    url: https://www.iso.org/standard/27001
+    tier: professional
+    jurisdictions: [GLOBAL]
+  - id: aicpa_soc2
+    title: SOC 2 - Trust Services Criteria for service organizations
+    publisher: AICPA and CIMA
+    url: https://www.aicpa-cima.com/topic/audit-assurance/audit-and-assurance-greater-than-soc-2/
+    tier: professional
+    jurisdictions: [GLOBAL]
+  - id: shrm_notice
+    title: Can employers require workers to give notice before they quit? (two weeks is the standard)
+    publisher: SHRM (Society for Human Resource Management)
+    url: https://www.shrm.org/topics-tools/employment-law-compliance/can-employers-require-workers-to-give-notice-quit
+    tier: professional
+    jurisdictions: [US]
+  - id: shrm_probation
+    title: Are probationary periods passe? (usually 30 to 90 days)
+    publisher: SHRM (Society for Human Resource Management)
+    url: https://www.shrm.org/topics-tools/news/talent-acquisition/probationary-periods-pass-
+    tier: professional
+    jurisdictions: [US]
+  - id: aba_noncompete
+    title: Employee non-compete agreements - reasonableness of scope and duration
+    publisher: American Bar Association (Business Law Today)
+    url: https://www.americanbar.org/groups/business_law/resources/business-law-today/2023-june/employee-non-compete-agreements-what-every-association-needs-to-know/
+    tier: professional
+    jurisdictions: [US]
+  - id: aba_nda
+    title: Best practices for negotiating and entering into nondisclosure agreements
+    publisher: American Bar Association (Litigation Section)
+    url: https://www.americanbar.org/groups/litigation/resources/newsletters/business-torts-unfair-competition/best-practices-negotiating-entering-nondisclosure-agreements/
+    tier: professional
+    jurisdictions: [US]
+  - id: aaa_consumer
+    title: AAA Consumer Arbitration Rules - consumer fee capped, business pays arbitrator, small-claims option
+    publisher: American Arbitration Association
+    url: https://www.adr.org/industries/consumer/
+    tier: professional
+    jurisdictions: [US]
+
+  # ---------- Law firms ----------
+  - id: nrf_liability_benchmark
+    title: Liability schemes in outsourcing and technology contracts - a global benchmark
+    publisher: Norton Rose Fulbright
+    url: https://www.nortonrosefulbright.com/-/media/files/nrf/nrfweb/knowledge-pdfs/liability-schemes-in-outsourcing-and-technology-contracts---a-global-bechmark.pdf
+    tier: law_firm
+    jurisdictions: [GLOBAL]
+  - id: mayerbrown_uk_covenants
+    title: United Kingdom - Restrictive covenants (non-competes usually 6-9 months, 12 months maximum)
+    publisher: Mayer Brown
+    url: https://www.mayerbrown.com/en/insights/publications/2024/07/restrictive-covenants-uk
+    tier: law_firm
+    jurisdictions: [UK]
+  - id: littler_uk_covenants
+    title: Boydell v NZP - enforceability of restrictive covenants (generally 3-12 months)
+    publisher: Littler
+    url: https://littler.co.uk/insights/boydell-v-nzp-ltd-and-others-a-useful-reminder-on-enforceability-of-restrictive-covenants/
+    tier: law_firm
+    jurisdictions: [UK]
+  - id: khaitan_covenants
+    title: Restrictive covenant clauses Q&A - India
+    publisher: Khaitan and Co
+    url: https://www.khaitanco.com/sites/default/files/2021-07/Restrictive%20covenant%20clauses%20QAndA%20India_0.pdf
+    tier: law_firm
+    jurisdictions: [IN]
+  - id: nishith_post_employment
+    title: Delhi HC's strict scrutiny of post-employment restraints
+    publisher: Nishith Desai Associates
+    url: https://www.nishithdesai.com/research-and-articles/hotline/hr-law-hotline/beyond-reasonableness-delhi-hcs-strict-scrutiny-of-post-employment-restraints-15383
+    tier: law_firm
+    jurisdictions: [IN]
+  - id: dlapiper_india_covenants
+    title: India - Enforcement of post-termination restrictive covenants in employment contracts
+    publisher: DLA Piper
+    url: https://knowledge.dlapiper.com/dlapiperknowledge/globalemploymentlatestdevelopments/india-enforcement-of-post-termination-restrictive-covenants-in-employment-contracts
+    tier: law_firm
+    jurisdictions: [IN]
+  - id: leglobal_india_contracts
+    title: India - Employment contracts (probation commonly 3-5 months, up to 6 under model standing orders)
+    publisher: L&E Global (employment law firm alliance)
+    url: https://leglobal.law/countries/india/employment-law/employment-law-overview-india/02-employment-contracts/
+    tier: law_firm
+    jurisdictions: [IN]
+  - id: jsa_mso_2026
+    title: JSA Prism - Model Standing Orders 2026 for the services sector (6-month probation, extendable by 3)
+    publisher: JSA Advocates and Solicitors
+    url: https://www.jsalaw.com/wp-content/uploads/2026/05/JSA-Prism-Employment-May-2026-MSO.Final_.pdf
+    tier: law_firm
+    jurisdictions: [IN]
+  - id: seyfarth_noncompete
+    title: 50-State Non-Compete Desktop Reference 2025-2026
+    publisher: Seyfarth Shaw
+    url: https://www.seyfarth.com/dir_docs/documents/50-state-guides/2026-50-State-Non-Compete-Desktop-Reference.pdf
+    tier: law_firm
+    jurisdictions: [US]
+  - id: moritthock_nda
+    title: Non-disclosure agreements (business information protected 2-5 years; trade secrets longer)
+    publisher: Moritt Hock and Hamroff
+    url: https://www.moritthock.com/non-disclosure-agreements/
+    tier: law_firm
+    jurisdictions: [US]
+  - id: connkavanaugh_sla
+    title: Three things you should know about service level agreements in SaaS/cloud contracts
+    publisher: Conn Kavanaugh
+    url: https://www.connkavanaugh.com/articles-and-resources/three-things-you-should-know-about-service-level-agreements-in-saas-cloud-contracts/
+    tier: law_firm
+    jurisdictions: [US]
+  - id: foxrothschild_dpa
+    title: EDPB ruling - specify the number of hours for processor breach notification
+    publisher: Fox Rothschild (via JD Supra)
+    url: https://www.jdsupra.com/legalnews/edpb-ruling-provides-takeaways-for-dpa-5678373/
+    tier: law_firm
+    jurisdictions: [EU]
+  - id: faegre_material_breach
+    title: Termination for material breach - notice and reasonable opportunity to cure
+    publisher: Faegre Drinker (Bruner and O'Connor on Construction Law)
+    url: https://www.faegredrinker.com/files/131406_5_Bruner__OConnor_Construction_Law__184.pdf
+    tier: law_firm
+    jurisdictions: [US]
+
+  # ---------- Business news ----------
+  - id: et_notice_period
+    title: Employees want notice period cut to 1 month (banks and IT firms use 2-3 months)
+    publisher: The Economic Times
+    url: https://m.economictimes.com/jobs/employees-want-notice-period-cut-to-1-month/articleshow/67733225.cms
+    tier: news
+    jurisdictions: [IN]
+  - id: toi_notice_period
+    title: IT sector's 90-day notice period (90 days is the norm across Indian IT companies)
+    publisher: The Times of India
+    url: https://timesofindia.indiatimes.com/city/pune/it-sectors-90-day-notice-period-doesnt-make-sense/articleshow/100462925.cms
+    tier: news
+    jurisdictions: [IN]

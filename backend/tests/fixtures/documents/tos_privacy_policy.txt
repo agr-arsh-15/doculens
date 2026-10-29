@@ -1,0 +1,24 @@
+CLOUDVISION SAAS TERMS OF SERVICE AND PRIVACY POLICY
+
+Last Updated: September 1, 2024
+Welcome to CloudVision. By creating an account or using our platform, you agree to be bound by these Terms of Service.
+
+1. Data Collection & Telemetry:
+We collect personal information when you register, including your email address, billing details, and IP address. We use cookies, tracking pixels, and device fingerprinting to monitor user activity, analyze telemetry, and serve targeted product advertisements. By using the platform, you consent to our automated tracking practices.
+
+2. Unilateral Modification of Terms:
+We reserve the right to modify or replace these terms at our sole discretion at any time without advance written notice. Your continued use of the service following any modifications constitutes full acceptance of the revised terms.
+
+3. Mandatory Binding Arbitration & Class Action Waiver:
+PLEASE READ THIS CAREFULLY. You and CloudVision agree that any dispute, claim, or controversy arising out of these terms shall be resolved exclusively through final and binding arbitration administered by the American Arbitration Association (AAA). YOU EXPRESSLY WAIVE ANY RIGHT TO A JURY TRIAL AND WAIVE ANY RIGHT TO INITIATE OR PARTICIPATE IN A CLASS ACTION LAWSUIT OR REPRESENTATIVE PROCEEDING.
+
+4. Warranty Disclaimer ("As-Is"):
+THE SERVICE IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS. CLOUDVISION EXPRESSLY DISCLAIMS ALL WARRANTIES OF ANY KIND, WHETHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. WE DO NOT GUARANTEE 100% UPTIME OR ERROR-FREE SERVICE.
+
+5. Limitation of Liability:
+IN NO EVENT SHALL CLOUDVISION, ITS DIRECTORS, OR EMPLOYEES BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES. OUR TOTAL AGGREGATE LIABILITY UNDER ANY LEGAL THEORY SHALL NOT EXCEED THE GREATER OF FIFTY DOLLARS ($50.00 USD) OR THE AMOUNT PAID BY YOU IN THE PRECEDING ONE (1) MONTH.
+
+6. Account Termination:
+We may suspend or terminate your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms.
+
+Contact: support@cloudvision-saas.com
