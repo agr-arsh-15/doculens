@@ -30,7 +30,7 @@ cp .env.example .env        # optional: add GROQ_API_KEY or GEMINI_API_KEY for h
 ./start.sh                  # creates .venv, installs dependencies, starts API :8000 and UI :5173
 ```
 
-Then open http://127.0.0.1:5173 and upload a document. The app starts empty: there are no bundled samples. Real public documents to try are in `demo_documents/` (sources and licences in `demo_documents/SOURCES.md`, a suggested walkthrough in `demo_documents/DEMO.md`).
+Then open http://127.0.0.1:5173 and upload a document. Locally there is no sign-in: you are the single local admin (see [Accounts and privacy](#accounts-and-privacy) for the hosted version). The app starts empty: there are no bundled samples. Real public documents to try are in `demo_documents/` (sources and licences in `demo_documents/SOURCES.md`, a suggested walkthrough in `demo_documents/DEMO.md`).
 
 Or run the two servers yourself:
 
@@ -133,7 +133,7 @@ DOCULENS_TEST_NEURAL=1 ../.venv/bin/python -m pytest
 cd ../frontend && npx playwright install chromium && npm run test:e2e
 ```
 
-- **Unit and API tests** (`backend/tests`) cover segmentation offsets and nesting, real-PDF layout handling (running headers and footers, detached clause numbers, bold headings), party extraction, value extraction, the quote verifier (fabricated quotes must be rejected), PII redaction, perspective flipping, document-scoped rule exclusions, finding de-duplication, scoring, Groq rate-limit and outage handling, the NLP Lab tokenizer, and the full HTTP flow: upload, SSE, cache, chat, email, PDF, lab, compare, history and delete.
+- **Unit and API tests** (`backend/tests`) cover segmentation offsets and nesting, real-PDF layout handling (running headers and footers, detached clause numbers, bold headings), party extraction, value extraction, the quote verifier (fabricated quotes must be rejected), PII redaction, perspective flipping, document-scoped rule exclusions, finding de-duplication, scoring, Groq rate-limit and outage handling, the NLP Lab tokenizer, and the full HTTP flow: upload, SSE, cache, chat, email, PDF, lab, compare, history and delete. Multi-user tests (`test_multiuser.py`) prove that one user cannot read another's documents or analyses, that cached results are copied rather than shared, quotas and own keys, admin-only routes, blocking, full account deletion, Supabase token verification (expired, wrong audience, wrong issuer and forged tokens are rejected), and that production refuses unsafe settings. Source tests (`test_sources.py`) fail if any market standard or range lacks a trusted source. The suite also passes against PostgreSQL (`DATABASE_URL=postgresql+psycopg://...`).
 - **Gold set** (`backend/tests/fixtures/gold/*.yaml`). Hand-labeled expectations for six internal test documents (`backend/tests/fixtures/documents/`; they are not shown in the app). Each file lists the issues a careful reviewer must raise, optional acceptable flags, known false positives that must never return, and expected benchmark values. The current engine meets all of them in both embedding modes (precision 100%, recall 100%, 0% unverifiable quotes). These samples informed the playbooks, so treat this as a regression gate, not an estimate of accuracy on unseen documents.
 - **CUAD** (510 expert-annotated commercial contracts, CC BY 4.0). Checks that DocuLens clause types line up with CUAD's annotations. Results on the first 40 test contracts:
 
@@ -147,21 +147,64 @@ cd ../frontend && npx playwright install chromium && npm run test:e2e
 
   Macro document F1 is 68% with neural embeddings and 57% with TF-IDF. *DocuLens' `termination` type covers all termination rights, while CUAD's category is termination for convenience only, so its precision is a floor.
 - **ToS;DR** (crowd-reviewed terms of service, CC BY-SA). Approved "bad" and "blocker" points are mapped to DocuLens clause types, and the live terms pages are analysed. DocuLens raised 29 of 33 mappable points (88%) across Apple, Spotify, Reddit and Dropbox. Three misses are a deliberate difference: ToS;DR counts "liability limited to fees paid" as bad, while the playbook treats that as market standard and flags only token caps. The fourth cites wording that is no longer in the live document.
-- **Playwright smoke tests** (`frontend/tests/smoke.spec.js`) start an isolated API and UI. They check that the home page offers only upload and paste, then run three journeys: an uploaded offer letter through report, chat and history; an uploaded MSA read from the vendor side; and a pasted NDA through Compare.
+- **Playwright journeys** (`frontend/tests/smoke.spec.js`) start an isolated API and UI in test sign-in mode. They check that signed-out visitors must sign in before uploading, then run an uploaded offer letter through report, sourced market sliders, chat, PDF download and history; an MSA from the vendor side; a pasted NDA through Compare; two real offer-letter PDFs; that a second user cannot see the first user's history or the admin dashboard; that the admin can see KPIs and block and unblock a user; and settings and sign-out.
 - **Real documents** (`demo_documents/`). Thirteen public offer letters, employment agreements, NDAs, a SaaS agreement, terms of service, privacy policies and a DPA, with the per-document results recorded in `demo_documents/SOURCES.md`.
 
-## Deployment
+## Accounts and privacy
 
-- **API on Render.** `render.yaml` builds `backend/Dockerfile`, mounts a persistent disk at `/data` and reads keys from Render environment variables. Set `CORS_ORIGINS` to your frontend URL.
-- **UI on Vercel.** `vercel.json` builds `frontend/`. Set `VITE_API_URL` to the API's public URL (for example `https://doculens-api.onrender.com`).
-- **Single host.** Run `uvicorn app.main:app` from `backend/`, then serve `frontend/dist` behind the same reverse proxy, with `/api` routed to the API.
+The hosted version requires signing in with Google before uploading. Each user sees only their own documents and reports.
+
+- **Sign-in.** Supabase Auth with Google. The API verifies every request's access token against the project's public signing keys (JWKS), checking signature, audience, issuer and expiry, and refuses blocked accounts.
+- **Isolation.** Every document, analysis, file and usage record carries a `user_id`, and every query filters by it; another user's resource answers 404. Identical documents uploaded by two users can reuse one computed result, but it is copied into a private row for each user. Original files live in a private Supabase Storage bucket under `<user_id>/`. Row Level Security is enabled on every table with no policies, so the public Supabase key cannot read them; only the API's database role can.
+- **AI quota and own keys.** Analyses and chat answers on the server's Groq key are limited per user per day (defaults 3 and 20, adjustable live by the admin). Beyond the limit, documents are still analysed by the local rules, with a notice. Users can add their own Groq key in Settings: it is checked with Groq, encrypted with Fernet (`ENCRYPTION_KEY`) and used only for their requests, with no daily limit.
+- **Admin dashboard** (`/admin`, for `ADMIN_EMAILS`). KPIs (users, sign-ups, active users, analyses, AI share, fallbacks, average score, storage), 30-day charts, document-type, jurisdiction and grade mix, a users table with per-user AI limits and block/unblock, and global settings (default limits, AI on/off). It never returns document text or findings.
+- **Account deletion.** Settings -> Delete account removes the sign-in account, every document, report, stored file, usage record and saved key.
+- **Hardening.** Rate limits per user and per IP, uploads checked by their file signature, generic error messages, security headers and a strict Content-Security-Policy, API docs disabled in production, and the API refuses to start in production without Supabase auth and an encryption key.
+
+Locally nothing changes: with `AUTH_MODE` unset the API runs in `local` mode (one local admin, SQLite, files on disk), and an existing single-user database is migrated in place so your history is kept. `AUTH_MODE=test` (automated tests only) accepts `test-<email>` tokens.
+
+## Deployment (free tiers)
+
+| Part | Service | Free tier notes |
+| --- | --- | --- |
+| Website | Vercel (`vercel.json`) | 100 GB bandwidth per month |
+| API | Hugging Face Spaces, Docker (`backend/Dockerfile`, port 7860) | 2 vCPU, 16 GB RAM; sleeps after 48 hours without traffic and takes 1-2 minutes to wake |
+| Sign-in, database, files | Supabase (Auth, Postgres, Storage) | 500 MB database, 1 GB file storage, 50,000 monthly users; paused after 7 days of inactivity |
+| AI | Groq | About 8,000 tokens per minute per model; roughly 10-15 full analyses per day on one key, which is why there is a per-user daily limit |
+| CI/CD | GitHub Actions | Tests on every push; on `main`, syncs `backend/` to the Space; a daily job calls `/api/health?deep=1` so the Space and database stay awake |
+
+**One-time setup.** Run the guided wizard from the repository root:
+
+```bash
+./scripts/setup-hosting.sh
+```
+
+It walks you through each dashboard, captures the values you copy into the git-ignored `.env.deploy`, and does the rest itself:
+
+1. Publishes the code to GitHub.
+2. Rotates the Groq key.
+3. Creates the private storage bucket and the database tables in Supabase.
+4. Lists exactly what to enter for Google sign-in.
+5. Creates the Hugging Face Space with its secrets and uploads the API.
+6. Sets the GitHub Actions secret and variables.
+7. Prints the three variables to add in Vercel.
+8. Waits until the API answers.
+
+**API environment (Space secrets and variables):** `APP_ENV=production`, `AUTH_MODE=supabase`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (secret key), `SUPABASE_STORAGE_BUCKET=documents`, `DATABASE_URL` (Supabase session pooler URI, `postgresql+psycopg://...`), `GROQ_API_KEY`, `ENCRYPTION_KEY`, `ADMIN_EMAILS`, `CORS_ORIGINS` (the website address). Database migrations (Alembic) run automatically at startup.
+
+**Website environment (Vercel):** `VITE_API_URL` (the Space address), `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`. These are public by design.
+
+**GitHub Actions:** secret `HF_TOKEN`; variables `HF_SPACE` (`user/doculens-api`) and `API_URL`.
 
 ## Project layout
 
 ```
 backend/
   app/
-    api/            documents, analyses (SSE, chat, email, report, lab, compare), meta
+    api/            documents, analyses (SSE, chat, email, report, lab, compare), me (account), admin, meta
+    auth.py         Supabase JWT verification, local and test sign-in modes
+    usage.py        daily AI quotas, users' own encrypted keys, global settings
+    security.py     rate limits, upload checks, security headers
     ingestion/      PDF / DOCX / TXT parsing with offsets
     structure/      clause segmenter
     classify/       doc type, jurisdiction, parties
@@ -171,12 +214,12 @@ backend/
     nlp/            embeddings (fastembed, TF-IDF fallback)
     lab/            four-layer NLP Lab
     reports/        PDF report
-    storage/        SQLite via SQLModel
+    storage/        SQLModel (Postgres or SQLite), Alembic migrations, file storage (Supabase bucket or disk)
   eval/             harness, gold scorer, CUAD and ToS;DR evaluations
   tests/            pytest suite, gold labels and internal test documents
 demo_documents/     real public documents for trying the app, with SOURCES.md and DEMO.md
 frontend/
-  src/pages/        Landing, Analyze, Report, Lab, Compare, History
+  src/pages/        Landing, Login, Analyze, Report, Lab, Compare, History, Settings, Admin, Privacy/Terms
   src/components/   report workspace, progress tracker, UI kit
   tests/            Playwright smoke tests
 ```
