@@ -9,6 +9,14 @@ It is a hybrid system:
 
 > DocuLens provides automated risk analysis for information only. It is not legal advice.
 
+## Live demo
+
+**[doculens-arsh-agrawal.vercel.app](https://doculens-arsh-agrawal.vercel.app)**: sign in with Google, then upload a document or try one from `demo_documents/`.
+
+- The API ([health check](https://doculens-api-encc.onrender.com/api/health)) runs on a free server that sleeps when idle, so the first request after a quiet spell can take about a minute.
+- Each account gets 3 AI-assisted analyses and 20 chat answers a day on the shared Groq key. After that, documents are still analysed by the local rules, or you can add your own free Groq key in Settings.
+- The hosted version uses TF-IDF clause matching to fit the free server's memory; running locally uses the neural embedding model (see [Deployment](#deployment-free-tiers)).
+
 ## What you get
 
 | View | What it shows |
@@ -165,6 +173,8 @@ Locally nothing changes: with `AUTH_MODE` unset the API runs in `local` mode (on
 
 ## Deployment (free tiers)
 
+Live: website [doculens-arsh-agrawal.vercel.app](https://doculens-arsh-agrawal.vercel.app), API [doculens-api-encc.onrender.com](https://doculens-api-encc.onrender.com/api/health).
+
 | Part | Service | Free tier notes |
 | --- | --- | --- |
 | Website | Vercel (`vercel.json`) | 100 GB bandwidth per month |
@@ -187,8 +197,10 @@ It walks you through each dashboard, captures the values you copy into the git-i
 4. Lists exactly what to enter for Google sign-in.
 5. Opens the Render Blueprint for the API, then sets its secrets through the Render API and deploys it.
 6. Sets the GitHub Actions variable for the keep-alive job.
-7. Prints the three variables to add in Vercel.
+7. Prints the three variables to add in Vercel, and points the API at the website's address if Vercel assigns a different one.
 8. Waits until the API answers.
+
+After the first Vercel deploy, turn off Vercel Authentication (Project Settings -> Deployment Protection) so visitors are not asked to log in to Vercel. If the site address changed, update it in Google (JavaScript origin) and Supabase (Site URL and Redirect URLs).
 
 **API environment (Render):** `APP_ENV=production`, `AUTH_MODE=supabase`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (secret key), `SUPABASE_STORAGE_BUCKET=documents`, `DATABASE_URL` (Supabase session pooler URI, `postgresql+psycopg://...`), `GROQ_API_KEY`, `ENCRYPTION_KEY`, `ADMIN_EMAILS`, `CORS_ORIGINS` (the website address). Database migrations (Alembic) run automatically at startup.
 
